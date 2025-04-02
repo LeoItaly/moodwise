@@ -31,11 +31,10 @@ MoodWise is a personal informatics app that helps users track their mood, physic
    ```bash
    npx expo start
    ```
-
-3. Run on your preferred platform:
-   - Press 'a' for Android
-   - Press 'i' for iOS (requires macOS)
-   - Press 'w' for web
+3. Install Expo Go on your phone from Google Play or Apple Store
+   
+4. Run:
+   - Scan the QR code with the app Expo Go
 
 ## Project Structure
 

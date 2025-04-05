@@ -3,44 +3,28 @@ import {
   View,
   Text,
   StyleSheet,
-  Switch,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import SettingItem from "../components/SettingItem";
+import {
+  colors,
+  layout,
+  spacing,
+  buttons,
+  textStyles,
+  typography,
+} from "../constants";
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
-  const SettingItem = ({
-    title,
-    description,
-    value,
-    onValueChange,
-    disabled,
-  }) => (
-    <View style={styles.settingItem}>
-      <View style={styles.settingTextContainer}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        {description && (
-          <Text style={styles.settingDescription}>{description}</Text>
-        )}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        trackColor={{ false: "#e2e8f0", true: "#4CAF50" }}
-        thumbColor={value ? "#ffffff" : "#f4f4f5"}
-      />
-    </View>
-  );
-
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
-        colors={["#ffffff", "#f0f9ff", "#ffffff"]}
+        colors={[colors.white, colors.background.secondary, colors.white]}
         style={styles.contentContainer}
       >
         <Text style={styles.title}>Settings</Text>
@@ -87,68 +71,26 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
-  contentContainer: {
-    padding: 20,
-  },
+  container: layout.container,
+  contentContainer: layout.gradientContainer,
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 24,
-    textAlign: "center",
+    ...textStyles.title,
+    color: colors.text.primary,
+    marginBottom: spacing.xxl,
   },
-  section: {
-    marginBottom: 32,
-  },
+  section: layout.section,
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#64748b",
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  settingTextContainer: {
-    flex: 1,
-    marginRight: 16,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1e293b",
-    marginBottom: 4,
-  },
-  settingDescription: {
-    fontSize: 14,
-    color: "#64748b",
+    ...textStyles.sectionTitle,
+    color: colors.text.secondary,
+    marginBottom: spacing.lg,
+    marginLeft: spacing.xs,
   },
   button: {
-    backgroundColor: "#ffffff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
+    backgroundColor: colors.white,
+    padding: spacing.lg,
+    borderRadius: buttons.secondary.borderRadius,
+    marginBottom: spacing.sm,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -158,12 +100,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   dangerButton: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: colors.background.danger,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1e293b",
+    fontSize: textStyles.body.fontSize,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.primary,
     textAlign: "center",
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,50 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
+  Animated,
 } from "react-native";
-import { LineChart, BarChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
-import { sampleData } from "../data/sampleData";
-import { activities } from "../data/activities";
-import { weather } from "../data/weather";
+import ChartCard from "../components/ChartCard";
+import MoodLineChart from "../components/MoodLineChart";
+import MoodBarChart from "../components/MoodBarChart";
+import {
+  colors,
+  layout,
+  buttons,
+  spacing,
+  textStyles,
+  borderRadius,
+} from "../constants";
+import { sampleData, activities, weather } from "../data/appData";
 import { LinearGradient } from "expo-linear-gradient";
+import MoodPieChart from "../components/MoodPieChart";
+import MoodBreakdown from "../components/MoodBreakdown";
 
 export default function StatsScreen() {
   const [selectedData, setSelectedData] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Activity");
+  const [selectedMoodIndex, setSelectedMoodIndex] = useState(null);
+  const [newMoodLogCount, setNewMoodLogCount] = useState(0);
+  const pulseAnim = new Animated.Value(1);
+
+  useEffect(() => {
+    // Start pulsing animation for pie chart
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   // Days of week for x-axis labels
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -143,92 +175,78 @@ export default function StatsScreen() {
     );
   };
 
+  // Calculate mood distribution for pie chart
+  const moodCounts = {
+    0: 0, // awful
+    1: 0, // bad
+    2: 0, // meh
+    3: 0, // good
+    4: 0, // radiant
+  };
+
+  // Count all moods (both morning and evening)
+  sampleData.forEach((day) => {
+    day.moods.forEach((mood) => {
+      moodCounts[mood]++;
+    });
+  });
+
+  const handlePiePress = (index) => {
+    setSelectedMoodIndex(index);
+  };
+
+  // This function would be called when a new mood is logged
+  const handleMoodLogged = () => {
+    setNewMoodLogCount((prev) => prev + 1);
+  };
+
   return (
     <ScrollView style={styles.container}>
-      <LinearGradient
-        colors={["#ffffff", "#f0f9ff", "#ffffff"]}
-        style={styles.chartContainer}
-      >
-        <Text style={styles.chartTitle}>Mood Over Time</Text>
-        <LineChart
-          data={moodOverTimeData}
-          height={250}
-          spacing={40}
-          initialSpacing={20}
-          color="#3b82f6"
-          thickness={3}
-          startFillColor="#3b82f6"
-          endFillColor="#60a5fa"
-          startOpacity={0.9}
-          endOpacity={0.2}
-          backgroundColor="transparent"
-          xAxisColor="#94a3b8"
-          yAxisColor="#94a3b8"
-          yAxisTextStyle={{ color: "#64748b", fontWeight: "500" }}
-          xAxisLabelTextStyle={{ color: "#64748b", fontWeight: "500" }}
-          hideRules
-          minValue={0}
-          maxValue={4}
-          stepValue={1}
-          onPress={(data) => {
+      <ChartCard title="Mood Over Time">
+        <MoodLineChart
+          onDataPress={(data) => {
             setSelectedData(data);
             setModalVisible(true);
           }}
         />
-      </LinearGradient>
+      </ChartCard>
 
-      <LinearGradient
-        colors={["#ffffff", "#f0f9ff", "#ffffff"]}
-        style={styles.chartContainer}
-      >
+      <ChartCard title={`Mood by ${selectedFilter}`}>
         <View style={styles.filterContainer}>
-          <Text style={styles.chartTitle}>Mood by </Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={selectedFilter}
               onValueChange={(value) => setSelectedFilter(value)}
               style={styles.picker}
-              dropdownIconColor="#64748b"
+              dropdownIconColor={colors.text.secondary}
             >
               <Picker.Item label="Activity" value="Activity" />
               <Picker.Item label="Weather" value="Weather" />
             </Picker>
           </View>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.barChartScrollContainer}
-        >
-          <BarChart
-            data={getBarChartData()}
-            height={250}
-            width={600}
-            spacing={40}
-            initialSpacing={10}
-            barWidth={30}
-            noOfSections={4}
-            barBorderRadius={6}
-            backgroundColor="transparent"
-            xAxisColor="#94a3b8"
-            yAxisColor="#94a3b8"
-            yAxisTextStyle={{ color: "#64748b", fontWeight: "500" }}
-            xAxisLabelTextStyle={{
-              color: "#64748b",
-              fontSize: 12,
-              fontWeight: "500",
-            }}
-            hideRules
-            minValue={0}
-            maxValue={4}
-            stepValue={1}
-            onPress={(data) => {
-              setSelectedData(data);
-              setModalVisible(true);
-            }}
-          />
-        </ScrollView>
-      </LinearGradient>
+        <MoodBarChart
+          filterType={selectedFilter}
+          onDataPress={(data) => {
+            setSelectedData(data);
+            setModalVisible(true);
+          }}
+        />
+      </ChartCard>
+
+      <ChartCard title="Mood Distribution">
+        <MoodPieChart
+          selectedMoodIndex={selectedMoodIndex}
+          onPiePress={handlePiePress}
+          pulseAnim={pulseAnim}
+          newLogCount={newMoodLogCount}
+        />
+
+        <MoodBreakdown
+          moodCounts={moodCounts}
+          selectedMoodIndex={selectedMoodIndex}
+        />
+      </ChartCard>
 
       {/* Modal for Details */}
       <Modal
@@ -254,96 +272,43 @@ export default function StatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
-  chartContainer: {
-    padding: 20,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: "visible",
-  },
+  container: layout.container,
   filterContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   pickerContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border.light,
     overflow: "hidden",
   },
   picker: {
     width: 150,
     height: Platform.OS === "ios" ? 200 : 55,
-    color: "#64748b",
+    color: colors.text.secondary,
   },
-  chartTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1e293b",
-    textAlign: "center",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
+  modalOverlay: layout.modalOverlay,
   modalContent: {
-    backgroundColor: "#fff",
-    padding: 24,
-    borderRadius: 16,
+    ...layout.modalContent,
     width: "85%",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
   },
   tooltip: {
-    padding: 12,
+    padding: spacing.md,
   },
   tooltipTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1e293b",
-    marginBottom: 12,
+    ...textStyles.subtitle,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
   tooltipText: {
-    fontSize: 16,
-    color: "#64748b",
-    marginBottom: 6,
+    fontSize: textStyles.body.fontSize,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
   },
-  closeButton: {
-    backgroundColor: "#3b82f6",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  closeButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  barChartScrollContainer: {
-    paddingRight: 20,
-  },
+  closeButton: buttons.close,
+  closeButtonText: buttons.closeText,
 });

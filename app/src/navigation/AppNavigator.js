@@ -2,15 +2,48 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Text, View, StyleSheet, Image } from "react-native";
 
 // Import screens
-import MoodScreen from "../screens/MoodScreen";
 import CalendarScreen from "../screens/CalendarScreen";
 import HomeScreen from "../screens/HomeScreen";
 import StatsScreen from "../screens/StatsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
+
+const formatDate = () => {
+  const today = new Date();
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const day = days[today.getDay()];
+  const date = today.getDate();
+  const month = months[today.getMonth()];
+
+  return `${day}, ${date} ${month}`;
+};
 
 export default function AppNavigator() {
   return (
@@ -23,15 +56,26 @@ export default function AppNavigator() {
         }}
       >
         <Tab.Screen
-          name="Mood"
-          component={MoodScreen}
+          name="Home"
+          component={HomeScreen}
           options={{
+            headerTitle: () => (
+              <View style={styles.headerContainer}>
+                <Text style={styles.dateText}>{formatDate()}</Text>
+              </View>
+            ),
+            headerLeft: () => (
+              <View style={styles.logoContainer}>
+                <MaterialCommunityIcons
+                  name="brain"
+                  size={30}
+                  color="#22c55e"
+                  style={styles.logo}
+                />
+              </View>
+            ),
             tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons
-                name="emoticon-outline"
-                size={size}
-                color={color}
-              />
+              <MaterialCommunityIcons name="home" size={size} color={color} />
             ),
           }}
         />
@@ -45,15 +89,6 @@ export default function AppNavigator() {
                 size={size}
                 color={color}
               />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="home" size={size} color={color} />
             ),
           }}
         />
@@ -83,3 +118,23 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 5,
+  },
+  logoContainer: {
+    marginLeft: 15,
+  },
+  logo: {
+    width: 30,
+    height: 30,
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#444",
+    fontWeight: "500",
+  },
+});

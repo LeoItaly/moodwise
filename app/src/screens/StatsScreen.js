@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Modal,
   Platform,
   Animated,
 } from "react-native";
@@ -13,6 +12,9 @@ import { Picker } from "@react-native-picker/picker";
 import ChartCard from "../components/ChartCard";
 import MoodLineChart from "../components/MoodLineChart";
 import MoodBarChart from "../components/MoodBarChart";
+import MoodSlopePlot from "../components/MoodSlopePlot";
+import DetailModal from "../components/DetailModal";
+import ActivitiesWeatherBarChart from "../components/ActivitiesWeatherBarChart";
 import {
   colors,
   layout,
@@ -22,9 +24,10 @@ import {
   borderRadius,
 } from "../constants";
 import { sampleData, activities, weather } from "../data/appData";
-import { LinearGradient } from "expo-linear-gradient";
 import MoodPieChart from "../components/MoodPieChart";
 import MoodBreakdown from "../components/MoodBreakdown";
+import ActivityWeatherPieChart from "../components/ActivityWeatherPieChart";
+import MoodTrendLineChart from "../components/MoodTrendLineChart";
 
 export default function StatsScreen() {
   const [selectedData, setSelectedData] = useState(null);
@@ -52,127 +55,38 @@ export default function StatsScreen() {
     ).start();
   }, []);
 
-  // Days of week for x-axis labels
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  // Process data for line chart (mood over time)
-  const moodOverTimeData = sampleData.slice(0, 7).map((item, index) => {
-    const avgMood = (item.moods[0] + item.moods[1]) / 2;
-    return {
-      value: avgMood,
-      label: daysOfWeek[index],
-      dataPointText: avgMood.toFixed(1),
-      date: item.date,
-      morningMood: item.moods[0],
-      eveningMood: item.moods[1],
-    };
-  });
-
-  // Activity icons mapping
-  const activityIcons = {
-    Football: "⚽",
-    Gymnastics: "🤸",
-    Swimming: "🏊",
-    Gym: "🏋️",
-    Walking: "🚶",
-    Badminton: "🏸",
-    Handball: "🤾",
-    Tennis: "🎾",
-    Running: "🏃",
-    Others: "🏋️‍♂️",
-  };
-
-  // Weather icons mapping
-  const weatherIcons = {
-    Sunny: "☀️",
-    Cloudy: "☁️",
-    Windy: "💨",
-    Rainy: "🌧️",
-    Snowy: "❄️",
-  };
-
-  // Process data for bar chart based on selected filter
-  const getBarChartData = () => {
-    if (selectedFilter === "Activity") {
-      return activities.map((activity) => {
-        const activityDays = sampleData.filter((day) =>
-          day.activities.includes(activity.label)
-        );
-        const avgMood =
-          activityDays.length > 0
-            ? activityDays.reduce((sum, day) => {
-                return sum + (day.moods[0] + day.moods[1]) / 2;
-              }, 0) / activityDays.length
-            : 0;
-
-        const color =
-          avgMood < 1 ? "#ef4444" : avgMood < 3 ? "#facc15" : "#22c55e";
-
-        return {
-          value: avgMood,
-          label: activityIcons[activity.label],
-          dataPointText: avgMood.toFixed(1),
-          count: activityDays.length,
-          frontColor: color,
-          type: "Activity",
-          name: activity.label,
-        };
-      });
-    } else {
-      return weather.map((weatherType) => {
-        const weatherDays = sampleData.filter(
-          (day) => day.weather === weatherType.label
-        );
-        const avgMood =
-          weatherDays.length > 0
-            ? weatherDays.reduce((sum, day) => {
-                return sum + (day.moods[0] + day.moods[1]) / 2;
-              }, 0) / weatherDays.length
-            : 0;
-
-        const color =
-          avgMood < 1 ? "#ef4444" : avgMood < 3 ? "#facc15" : "#22c55e";
-
-        return {
-          value: avgMood,
-          label: weatherIcons[weatherType.label],
-          dataPointText: avgMood.toFixed(1),
-          count: weatherDays.length,
-          frontColor: color,
-          type: "Weather",
-          name: weatherType.label,
-        };
-      });
+  // Process data for each chart type before displaying in the modal
+  const handleDataPress = (data) => {
+    // If data from bar chart (has type property)
+    if (data.type) {
+      setSelectedData(data);
     }
-  };
+    // If data has date property but not full moods array (from line chart)
+    else if (
+      data.date &&
+      !data.moods &&
+      (data.morningMood !== undefined || data.eveningMood !== undefined)
+    ) {
+      // Find the full day data for that date
+      const dayData = sampleData.find((day) => day.date === data.date);
+      if (dayData) {
+        setSelectedData(dayData);
+      } else {
+        // Create a compatible structure if we don't have the full data
+        setSelectedData({
+          date: data.date,
+          moods: [data.morningMood, data.eveningMood],
+          activities: [],
+          weather: null,
+        });
+      }
+    }
+    // If it's already a complete day object (from slope plot)
+    else if (data.date && data.moods) {
+      setSelectedData(data);
+    }
 
-  const renderTooltip = (data) => {
-    if (!data) return null;
-
-    return (
-      <View style={styles.tooltip}>
-        <Text style={styles.tooltipTitle}>
-          {data.date ? "Date: " + data.date : `${data.type}: ${data.name}`}
-        </Text>
-        {data.date ? (
-          <>
-            <Text style={styles.tooltipText}>
-              Morning Mood: {data.morningMood}
-            </Text>
-            <Text style={styles.tooltipText}>
-              Evening Mood: {data.eveningMood}
-            </Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.tooltipText}>
-              Average Mood: {data.value.toFixed(1)}
-            </Text>
-            <Text style={styles.tooltipText}>Times Logged: {data.count}</Text>
-          </>
-        )}
-      </View>
-    );
+    setModalVisible(true);
   };
 
   // Calculate mood distribution for pie chart
@@ -195,43 +109,62 @@ export default function StatsScreen() {
     setSelectedMoodIndex(index);
   };
 
-  // This function would be called when a new mood is logged
-  const handleMoodLogged = () => {
-    setNewMoodLogCount((prev) => prev + 1);
-  };
-
   return (
     <ScrollView style={styles.container}>
+      <ChartCard title="Mood Trend">
+        <Text style={styles.chartDescription}>
+          Average daily mood trends over your selected time period
+        </Text>
+        <MoodTrendLineChart onDataPress={handleDataPress} />
+      </ChartCard>
+
       <ChartCard title="Mood Over Time">
-        <MoodLineChart
-          onDataPress={(data) => {
-            setSelectedData(data);
-            setModalVisible(true);
-          }}
+        <Text style={styles.chartDescription}>
+          Morning and evening mood scores shown separately
+        </Text>
+        <MoodLineChart onDataPress={handleDataPress} />
+      </ChartCard>
+
+      <ChartCard title="Daily Mood Changes">
+        <Text style={styles.chartDescription}>
+          How your mood shifts from morning to evening
+        </Text>
+        <MoodSlopePlot onDataPress={handleDataPress} />
+      </ChartCard>
+
+      {/* Global filter for Activity/Weather charts */}
+      <View style={styles.globalFilterContainer}>
+        <Text style={styles.globalFilterTitle}>
+          Select data type for chart below:
+        </Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={selectedFilter}
+            onValueChange={(value) => setSelectedFilter(value)}
+            style={styles.picker}
+            dropdownIconColor={colors.text.secondary}
+          >
+            <Picker.Item label="Activity" value="Activity" />
+            <Picker.Item label="Weather" value="Weather" />
+          </Picker>
+        </View>
+      </View>
+
+      <ChartCard title={`${selectedFilter} Insights`}>
+        <Text style={styles.chartDescription}>
+          Frequency and average mood for each {selectedFilter.toLowerCase()}
+        </Text>
+        <ActivitiesWeatherBarChart
+          selectedFilter={selectedFilter}
+          onDataPress={handleDataPress}
         />
       </ChartCard>
 
-      <ChartCard title={`Mood by ${selectedFilter}`}>
-        <View style={styles.filterContainer}>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedFilter}
-              onValueChange={(value) => setSelectedFilter(value)}
-              style={styles.picker}
-              dropdownIconColor={colors.text.secondary}
-            >
-              <Picker.Item label="Activity" value="Activity" />
-              <Picker.Item label="Weather" value="Weather" />
-            </Picker>
-          </View>
-        </View>
-        <MoodBarChart
-          filterType={selectedFilter}
-          onDataPress={(data) => {
-            setSelectedData(data);
-            setModalVisible(true);
-          }}
-        />
+      <ChartCard title={`${selectedFilter} Distribution`}>
+        <Text style={styles.chartDescription}>
+          Distribution of {selectedFilter.toLowerCase()} categories
+        </Text>
+        <ActivityWeatherPieChart selectedFilter={selectedFilter} />
       </ChartCard>
 
       <ChartCard title="Mood Distribution">
@@ -249,24 +182,11 @@ export default function StatsScreen() {
       </ChartCard>
 
       {/* Modal for Details */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <DetailModal
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {renderTooltip(selectedData)}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        selectedDay={selectedData}
+      />
     </ScrollView>
   );
 }
@@ -285,6 +205,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.light,
     overflow: "hidden",
+    alignSelf: "center",
   },
   picker: {
     width: 150,
@@ -311,4 +232,32 @@ const styles = StyleSheet.create({
   },
   closeButton: buttons.close,
   closeButtonText: buttons.closeText,
+  chartDescription: {
+    ...textStyles.body,
+    color: colors.text.secondary,
+    marginBottom: spacing.md,
+  },
+  globalFilterContainer: {
+    backgroundColor: colors.background.secondary,
+    padding: spacing.md,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.md,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  globalFilterTitle: {
+    ...textStyles.body,
+    fontWeight: "600",
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    textAlign: "center",
+  },
 });

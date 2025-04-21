@@ -3,13 +3,159 @@ import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
 import { moodIcons, weather, activities } from "../data/appData";
 
 /**
- * @deprecated This component is deprecated.
- * Use MoodSummaryModal instead for consistent UI across the app.
+ * Displays detail information for a selected data point from charts
  */
 const DetailModal = ({ visible, onClose, selectedDay }) => {
   const getActivityWithIcon = (activityName) => {
     const activity = activities.find((a) => a.label === activityName);
     return activity ? `${activity.icon} ${activity.label}` : activityName;
+  };
+
+  // Check if this is aggregated data (from bar chart) or day data
+  const isAggregatedData = selectedDay && selectedDay.type;
+  // Check if this is count data from activities/weather bar chart
+  const isCountData = selectedDay && selectedDay.isCountData;
+
+  // For bar chart data (activity or weather aggregation)
+  const renderAggregatedData = () => {
+    if (!selectedDay) return null;
+
+    // If it's from the count chart, show more detailed information
+    if (isCountData) {
+      return (
+        <>
+          <Text style={styles.modalTitle}>
+            {selectedDay.type}: {selectedDay.name}
+          </Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Times Logged:</Text>
+            <Text style={styles.sectionText}>{selectedDay.count}</Text>
+          </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Average Mood:</Text>
+            <Text style={styles.sectionText}>
+              {selectedDay.value.toFixed(1)}
+            </Text>
+          </View>
+
+          {selectedDay.days && selectedDay.days.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Days:</Text>
+              <View style={styles.daysList}>
+                {selectedDay.days.slice(0, 5).map((day, index) => (
+                  <View key={index} style={styles.dayItem}>
+                    <Text style={styles.dayDate}>{day.date}</Text>
+                    <Text style={styles.dayAvgMood}>
+                      Avg Mood: {((day.moods[0] + day.moods[1]) / 2).toFixed(1)}
+                    </Text>
+                  </View>
+                ))}
+                {selectedDay.days.length > 5 && (
+                  <Text style={styles.moreText}>
+                    +{selectedDay.days.length - 5} more days...
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
+        </>
+      );
+    }
+
+    // Original aggregated data rendering
+    return (
+      <>
+        <Text style={styles.modalTitle}>
+          {selectedDay.type}: {selectedDay.name}
+        </Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Average Mood:</Text>
+          <Text style={styles.sectionText}>{selectedDay.value.toFixed(1)}</Text>
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Times Logged:</Text>
+          <Text style={styles.sectionText}>{selectedDay.count}</Text>
+        </View>
+      </>
+    );
+  };
+
+  // For day-specific data (from line chart or slope chart)
+  const renderDayData = () => {
+    if (!selectedDay) return null;
+
+    return (
+      <>
+        <Text style={styles.modalTitle}>{selectedDay?.date || "No Data"}</Text>
+        {selectedDay?.moods?.length > 0 ? (
+          <>
+            <View style={styles.moodSection}>
+              <Text style={styles.sectionTitle}>Morning Mood:</Text>
+              <Text
+                style={[
+                  styles.moodEmoji,
+                  {
+                    color: moodIcons.find(
+                      (m) => m.id === selectedDay.moods[0] + 1
+                    )?.color,
+                  },
+                ]}
+              >
+                {
+                  moodIcons.find((m) => m.id === selectedDay.moods[0] + 1)
+                    ?.emoji
+                }
+              </Text>
+            </View>
+            <View style={styles.moodSection}>
+              <Text style={styles.sectionTitle}>Evening Mood:</Text>
+              <Text
+                style={[
+                  styles.moodEmoji,
+                  {
+                    color: moodIcons.find(
+                      (m) => m.id === selectedDay.moods[1] + 1
+                    )?.color,
+                  },
+                ]}
+              >
+                {
+                  moodIcons.find((m) => m.id === selectedDay.moods[1] + 1)
+                    ?.emoji
+                }
+              </Text>
+            </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Activities:</Text>
+              <Text style={styles.sectionText}>
+                {selectedDay.activities.length > 0
+                  ? selectedDay.activities.map(getActivityWithIcon).join(", ")
+                  : "None"}
+              </Text>
+            </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Weather:</Text>
+              <Text style={styles.sectionText}>
+                {weather.find((w) => w.label === selectedDay.weather)?.icon}{" "}
+                {selectedDay.weather}
+              </Text>
+            </View>
+            {selectedDay.notes && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Notes:</Text>
+                <Text style={styles.sectionText}>
+                  {selectedDay.notes.length > 100
+                    ? selectedDay.notes.substring(0, 100) + "..."
+                    : selectedDay.notes}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <Text style={styles.noDataText}>No data for this day.</Text>
+        )}
+      </>
+    );
   };
 
   return (
@@ -21,52 +167,7 @@ const DetailModal = ({ visible, onClose, selectedDay }) => {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>
-            {selectedDay?.date || "No Data"}
-          </Text>
-          {selectedDay?.moods.length > 0 ? (
-            <>
-              <View style={styles.moodSection}>
-                <Text style={styles.sectionTitle}>Morning Mood:</Text>
-                <Text
-                  style={[
-                    styles.moodEmoji,
-                    { color: moodIcons[selectedDay.moods[0]].color },
-                  ]}
-                >
-                  {moodIcons[selectedDay.moods[0]].emoji}
-                </Text>
-              </View>
-              <View style={styles.moodSection}>
-                <Text style={styles.sectionTitle}>Evening Mood:</Text>
-                <Text
-                  style={[
-                    styles.moodEmoji,
-                    { color: moodIcons[selectedDay.moods[1]].color },
-                  ]}
-                >
-                  {moodIcons[selectedDay.moods[1]].emoji}
-                </Text>
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Activities:</Text>
-                <Text style={styles.sectionText}>
-                  {selectedDay.activities.length > 0
-                    ? selectedDay.activities.map(getActivityWithIcon).join(", ")
-                    : "None"}
-                </Text>
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Weather:</Text>
-                <Text style={styles.sectionText}>
-                  {weather.find((w) => w.label === selectedDay.weather)?.icon}{" "}
-                  {selectedDay.weather}
-                </Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noDataText}>No data for this day.</Text>
-          )}
+          {isAggregatedData ? renderAggregatedData() : renderDayData()}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
@@ -135,6 +236,31 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  daysList: {
+    marginTop: 5,
+  },
+  dayItem: {
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  dayDate: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 2,
+  },
+  dayAvgMood: {
+    fontSize: 12,
+    color: "#666",
+  },
+  moreText: {
+    fontSize: 12,
+    color: "#666",
+    fontStyle: "italic",
+    marginTop: 5,
   },
 });
 

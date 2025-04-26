@@ -2,6 +2,7 @@
 let inMemoryStorage = {
   moodData: [],
   customActivities: [],
+  hiddenActivities: [],
 };
 
 // Generate mock consecutive days for demo streak
@@ -156,4 +157,26 @@ export const calculateStreak = (moodData) => {
   }
 
   return streak;
+};
+
+// Save hidden default activities
+export const saveHiddenActivities = async (hiddenActivities) => {
+  try {
+    inMemoryStorage.hiddenActivities = hiddenActivities;
+    console.log("Saved hidden activities in memory");
+    return true;
+  } catch (error) {
+    console.error("Error saving hidden activities:", error);
+    return false;
+  }
+};
+
+// Load hidden default activities
+export const loadHiddenActivities = async () => {
+  try {
+    return inMemoryStorage.hiddenActivities;
+  } catch (error) {
+    console.error("Error loading hidden activities:", error);
+    return [];
+  }
 };

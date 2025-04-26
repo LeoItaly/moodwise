@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { Picker } from "@react-native-picker/picker";
@@ -11,6 +11,8 @@ import {
   textStyles,
   buttons,
 } from "../constants";
+import { useFocusEffect } from "@react-navigation/native";
+import { loadMoodData } from "../utils/storage";
 
 // Custom wrapper for MoodSummaryModal that only shows a Back button
 const ReadOnlyMoodModal = ({ visible, onClose, selectedDay }) => {
@@ -142,6 +144,7 @@ export default function CalendarScreen({ route }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [selectedWeather, setSelectedWeather] = useState(null);
+  const [allMoodData, setAllMoodData] = useState([...sampleData]);
 
   // Get today's date in YYYY-MM-DD format for initialization
   const getTodayFormatted = () => {
@@ -149,11 +152,26 @@ export default function CalendarScreen({ route }) {
     return formatDateISO(today);
   };
 
+  // Use useFocusEffect to reload mood data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const refreshMoodData = async () => {
+        // Load mood data from storage
+        const updatedData = await loadMoodData();
+        if (updatedData && updatedData.length > 0) {
+          setAllMoodData(updatedData);
+        }
+      };
+
+      refreshMoodData();
+    }, [])
+  );
+
   // Use useEffect to handle initial selected date from navigation
   useEffect(() => {
     if (selectedDate) {
-      // Find the mood data for the selected date
-      const selected = sampleData.find((item) => item.date === selectedDate);
+      // Find the mood data for the selected date in all the mood data
+      const selected = allMoodData.find((item) => item.date === selectedDate);
 
       // Set the selected day and show the modal
       setSelectedDay(
@@ -167,15 +185,21 @@ export default function CalendarScreen({ route }) {
       );
       setModalVisible(true);
     }
-  }, [selectedDate]);
+  }, [selectedDate, allMoodData]);
 
   // Filter data based on selected activity and weather
-  const filteredData = sampleData.filter((item) => {
+  const filteredData = allMoodData.filter((item) => {
     const activityMatch =
-      !selectedActivity || item.activities.includes(selectedActivity);
+      !selectedActivity || item.activities?.includes(selectedActivity);
     const weatherMatch = !selectedWeather || item.weather === selectedWeather;
     return activityMatch && weatherMatch;
   });
+
+  // Update filters when they change
+  useEffect(() => {
+    // This effect will run whenever the filters change
+    console.log("Filters updated:", { selectedActivity, selectedWeather });
+  }, [selectedActivity, selectedWeather]);
 
   // Transform filtered data into markedDates format with custom markers
   const markedDates = filteredData.reduce((acc, item) => {

@@ -10,8 +10,6 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import ChartCard from "../components/ChartCard";
-import MoodLineChart from "../components/MoodLineChart";
-import MoodBarChart from "../components/MoodBarChart";
 import MoodSlopePlot from "../components/MoodSlopePlot";
 import DetailModal from "../components/DetailModal";
 import ActivitiesWeatherBarChart from "../components/ActivitiesWeatherBarChart";
@@ -25,14 +23,12 @@ import {
 } from "../constants";
 import { sampleData, activities, weather } from "../data/appData";
 import MoodPieChart from "../components/MoodPieChart";
-import MoodBreakdown from "../components/MoodBreakdown";
 import ActivityWeatherPieChart from "../components/ActivityWeatherPieChart";
-import MoodTrendLineChart from "../components/MoodTrendLineChart";
+import WeeklyMoodTrend from "../components/WeeklyMoodTrend";
 
 export default function StatsScreen() {
   const [selectedData, setSelectedData] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("Activity");
   const [selectedMoodIndex, setSelectedMoodIndex] = useState(null);
   const [newMoodLogCount, setNewMoodLogCount] = useState(0);
   const pulseAnim = new Animated.Value(1);
@@ -111,18 +107,23 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <ChartCard title="Mood Trend">
+      <ChartCard title="Mood Distribution">
         <Text style={styles.chartDescription}>
-          Average daily mood trends over your selected time period
+          Overview of your mood entries and patterns
         </Text>
-        <MoodTrendLineChart onDataPress={handleDataPress} />
+        <MoodPieChart
+          selectedMoodIndex={selectedMoodIndex}
+          onPiePress={handlePiePress}
+          pulseAnim={pulseAnim}
+          newLogCount={newMoodLogCount}
+        />
       </ChartCard>
 
-      <ChartCard title="Mood Over Time">
+      <ChartCard title="Weekly Mood Trend">
         <Text style={styles.chartDescription}>
-          Morning and evening mood scores shown separately
+          Your average daily mood over the past week
         </Text>
-        <MoodLineChart onDataPress={handleDataPress} />
+        <WeeklyMoodTrend onDataPress={handleDataPress} />
       </ChartCard>
 
       <ChartCard title="Daily Mood Changes">
@@ -132,52 +133,24 @@ export default function StatsScreen() {
         <MoodSlopePlot onDataPress={handleDataPress} />
       </ChartCard>
 
-      {/* Global filter for Activity/Weather charts */}
-      <View style={styles.globalFilterContainer}>
-        <Text style={styles.globalFilterTitle}>
-          Select data type for chart below:
-        </Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedFilter}
-            onValueChange={(value) => setSelectedFilter(value)}
-            style={styles.picker}
-            dropdownIconColor={colors.text.secondary}
-          >
-            <Picker.Item label="Activity" value="Activity" />
-            <Picker.Item label="Weather" value="Weather" />
-          </Picker>
-        </View>
-      </View>
-
-      <ChartCard title={`${selectedFilter} Insights`}>
+      <ChartCard title="Activity & Weather Insights">
         <Text style={styles.chartDescription}>
-          Frequency and average mood for each {selectedFilter.toLowerCase()}
+          Frequency and average mood for each category
         </Text>
         <ActivitiesWeatherBarChart
-          selectedFilter={selectedFilter}
           onDataPress={handleDataPress}
+          initialFilter="Activity"
         />
       </ChartCard>
 
-      <ChartCard title={`${selectedFilter} Distribution`}>
+      <ChartCard title="Relationship Summary">
         <Text style={styles.chartDescription}>
-          Distribution of {selectedFilter.toLowerCase()} categories
+          Discover patterns between your activities, weather conditions, and
+          mood
         </Text>
-        <ActivityWeatherPieChart selectedFilter={selectedFilter} />
-      </ChartCard>
-
-      <ChartCard title="Mood Distribution">
-        <MoodPieChart
-          selectedMoodIndex={selectedMoodIndex}
-          onPiePress={handlePiePress}
-          pulseAnim={pulseAnim}
-          newLogCount={newMoodLogCount}
-        />
-
-        <MoodBreakdown
-          moodCounts={moodCounts}
-          selectedMoodIndex={selectedMoodIndex}
+        <ActivityWeatherPieChart
+          initialFilter="Activity"
+          onSlicePress={handleDataPress}
         />
       </ChartCard>
 
@@ -236,28 +209,5 @@ const styles = StyleSheet.create({
     ...textStyles.body,
     color: colors.text.secondary,
     marginBottom: spacing.md,
-  },
-  globalFilterContainer: {
-    backgroundColor: colors.background.secondary,
-    padding: spacing.md,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
-    marginTop: spacing.md,
-    borderRadius: borderRadius.md,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  globalFilterTitle: {
-    ...textStyles.body,
-    fontWeight: "600",
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    textAlign: "center",
   },
 });

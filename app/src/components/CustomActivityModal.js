@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,15 +12,38 @@ import { colors, spacing, borderRadius, textStyles } from "../constants";
 const CustomActivityModal = ({ visible, onClose, onSave }) => {
   const [emoji, setEmoji] = useState("");
   const [activityName, setActivityName] = useState("");
+  const [errors, setErrors] = useState({ emoji: false, name: false });
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      // Reset form state when modal opens
+      setEmoji("");
+      setActivityName("");
+      setErrors({ emoji: false, name: false });
+      setAttemptedSubmit(false);
+    }
+  }, [visible]);
+
+  const validateForm = () => {
+    const newErrors = {
+      emoji: !emoji.trim(),
+      name: !activityName.trim(),
+    };
+    setErrors(newErrors);
+    return !newErrors.emoji && !newErrors.name;
+  };
 
   const handleSave = () => {
-    if (emoji.trim() && activityName.trim()) {
+    setAttemptedSubmit(true);
+    if (validateForm()) {
       onSave({
         icon: emoji.trim(),
         label: activityName.trim(),
       });
       setEmoji("");
       setActivityName("");
+      setAttemptedSubmit(false);
     }
   };
 
@@ -38,24 +61,48 @@ const CustomActivityModal = ({ visible, onClose, onSave }) => {
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Activity Emoji</Text>
             <TextInput
-              style={styles.emojiInput}
+              style={[
+                styles.emojiInput,
+                attemptedSubmit && errors.emoji && styles.inputError,
+              ]}
               value={emoji}
-              onChangeText={setEmoji}
+              onChangeText={(text) => {
+                setEmoji(text);
+                if (attemptedSubmit) {
+                  setErrors({ ...errors, emoji: !text.trim() });
+                }
+              }}
               placeholder="📱"
               textAlign="center"
-              maxLength={2} // Limit to 1-2 emoji characters
+              maxLength={2}
             />
+            {attemptedSubmit && errors.emoji && (
+              <Text style={styles.errorText}>Please add an emoji</Text>
+            )}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Activity Name</Text>
             <TextInput
-              style={styles.nameInput}
+              style={[
+                styles.nameInput,
+                attemptedSubmit && errors.name && styles.inputError,
+              ]}
               value={activityName}
-              onChangeText={setActivityName}
+              onChangeText={(text) => {
+                setActivityName(text);
+                if (attemptedSubmit) {
+                  setErrors({ ...errors, name: !text.trim() });
+                }
+              }}
               placeholder="Enter activity name"
               maxLength={20}
             />
+            {attemptedSubmit && errors.name && (
+              <Text style={styles.errorText}>
+                Please enter an activity name
+              </Text>
+            )}
           </View>
 
           <View style={styles.modalButtons}>
@@ -68,7 +115,6 @@ const CustomActivityModal = ({ visible, onClose, onSave }) => {
             <TouchableOpacity
               style={[styles.modalButton, styles.saveButton]}
               onPress={handleSave}
-              disabled={!emoji.trim() || !activityName.trim()}
             >
               <Text style={styles.saveButtonText}>Add</Text>
             </TouchableOpacity>
@@ -127,6 +173,15 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     width: "100%",
+  },
+  inputError: {
+    borderColor: "#ef4444",
+  },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: "center",
   },
   modalButtons: {
     flexDirection: "row",

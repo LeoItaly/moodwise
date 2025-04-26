@@ -11,7 +11,12 @@ import { BarChart } from "react-native-gifted-charts";
 import { sampleData, activities, weather, moodIcons } from "../data/appData";
 import { colors } from "../constants";
 
-const ActivitiesWeatherBarChart = ({ onDataPress, selectedFilter }) => {
+const ActivitiesWeatherBarChart = ({
+  onDataPress,
+  initialFilter = "Activity",
+}) => {
+  const [selectedFilter, setSelectedFilter] = useState(initialFilter);
+
   // Get screen width for chart sizing
   const screenWidth = Dimensions.get("window").width;
 
@@ -212,6 +217,13 @@ const ActivitiesWeatherBarChart = ({ onDataPress, selectedFilter }) => {
     }
   };
 
+  // Toggle between Activity and Weather filters
+  const toggleFilter = () => {
+    setSelectedFilter((prevFilter) =>
+      prevFilter === "Activity" ? "Weather" : "Activity"
+    );
+  };
+
   return (
     <>
       <View style={styles.legendContainer}>
@@ -228,15 +240,20 @@ const ActivitiesWeatherBarChart = ({ onDataPress, selectedFilter }) => {
         </View>
       </View>
 
-      {/* Filter indicator */}
+      {/* Filter toggle */}
       <View style={styles.filterBadgeContainer}>
-        <View style={styles.filterBadge}>
+        <TouchableOpacity
+          style={styles.filterBadge}
+          onPress={toggleFilter}
+          activeOpacity={0.7}
+        >
           <Text style={styles.filterBadgeText}>
             {selectedFilter === "Activity"
               ? "🏃 Activity Data"
               : "☁️ Weather Data"}
           </Text>
-        </View>
+          <Text style={styles.filterToggleHint}>(Tap to switch)</Text>
+        </TouchableOpacity>
       </View>
 
       {chartData.length === 0 ? (
@@ -358,16 +375,24 @@ const styles = StyleSheet.create({
   },
   filterBadge: {
     backgroundColor: colors.background.secondary,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border.light,
+    flexDirection: "column",
+    alignItems: "center",
   },
   filterBadgeText: {
     fontSize: 14,
     fontWeight: "600",
     color: colors.text.secondary,
+  },
+  filterToggleHint: {
+    fontSize: 10,
+    color: colors.text.secondary,
+    marginTop: 2,
+    fontStyle: "italic",
   },
   noDataText: {
     textAlign: "center",

@@ -1,27 +1,48 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
-import { PieChart } from "react-native-gifted-charts";
-import { sampleData, activities, weather, moodIcons } from "../data/appData";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
+import { sampleData, activities, weather } from "../data/appData";
 import { colors } from "../constants";
 import CategoryDetailModal from "./CategoryDetailModal";
 import { getMoodColor, getMoodEmoji } from "../utils/moodUtils";
 
-const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
+const ActivityWeatherPieChart = ({
+  initialFilter = "Activity",
+  onSlicePress,
+}) => {
+  const [selectedFilter, setSelectedFilter] = useState(initialFilter);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   // Get screen dimensions for responsive sizing
   const screenWidth = Dimensions.get("window").width;
-  const chartSize = Math.min(screenWidth - 60, 300); // Cap at 300px max
 
-  // Process data for pie chart
-  const pieData = useMemo(() => {
+  // Toggle between Activity and Weather filters
+  const toggleFilter = () => {
+    setSelectedFilter((prevFilter) =>
+      prevFilter === "Activity" ? "Weather" : "Activity"
+    );
+  };
+
+  // Process data for relationship analysis
+  const relationshipData = useMemo(() => {
     // Map of all activities/weather entries with counts and mood sums
     const dataMap = new Map();
 
     // Initialize with "No Activity" category if we're in Activity mode
     if (selectedFilter === "Activity") {
-      dataMap.set("No Activity", { count: 0, moodSum: 0, days: [] });
+      dataMap.set("No Activity", {
+        count: 0,
+        moodSum: 0,
+        days: [],
+        weatherTypes: {},
+      });
     }
 
     // Process each day's data
@@ -35,6 +56,12 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
           item.count++;
           item.moodSum += avgDayMood;
           item.days.push(day);
+
+          // Track associated weather
+          if (day.weather) {
+            item.weatherTypes[day.weather] =
+              (item.weatherTypes[day.weather] || 0) + 1;
+          }
         } else {
           // Handle each activity for the day
           day.activities.forEach((activityName) => {
@@ -89,7 +116,7 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
       }
     });
 
-    // Convert map to pie chart data array
+    // Format data for display
     const result = [];
 
     if (selectedFilter === "Activity") {
@@ -121,7 +148,6 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
         result.push({
           value: noActivity.count,
           color: getMoodColor(avgMood),
-          text: noActivity.count.toString(),
           emoji: "❌",
           moodEmoji: getMoodEmoji(avgMood),
           weatherEmoji: weatherEmoji,
@@ -130,6 +156,7 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
           days: noActivity.days,
           type: "Activity",
           weatherTypes: noActivity.weatherTypes || {},
+          topWeather: topWeather,
         });
       }
 
@@ -161,7 +188,6 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
           result.push({
             value: data.count,
             color: getMoodColor(avgMood),
-            text: data.count.toString(),
             emoji: activity.icon,
             moodEmoji: getMoodEmoji(avgMood),
             weatherEmoji: weatherEmoji,
@@ -170,6 +196,7 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
             days: data.days,
             type: "Activity",
             weatherTypes: data.weatherTypes || {},
+            topWeather: topWeather,
           });
         }
       });
@@ -206,7 +233,6 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
           result.push({
             value: data.count,
             color: getMoodColor(avgMood),
-            text: data.count.toString(),
             emoji: weatherType.icon,
             moodEmoji: getMoodEmoji(avgMood),
             activityEmoji: activityEmoji,
@@ -215,21 +241,18 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
             days: data.days,
             type: "Weather",
             activityTypes: data.activityTypes || {},
+            topActivity: topActivity,
           });
         }
       });
     }
 
-    return result;
+    // Sort by average mood (highest to lowest)
+    return result.sort((a, b) => b.avgMood - a.avgMood);
   }, [selectedFilter]);
 
-  // Calculate total logs for percentage display
-  const totalLogs = useMemo(() => {
-    return pieData.reduce((sum, item) => sum + item.value, 0);
-  }, [pieData]);
-
-  // Handle slice press
-  const handleSlicePress = (item) => {
+  // Handle category selection
+  const handleCategoryPress = (item) => {
     const categoryData = {
       type: item.type,
       name: item.name,
@@ -244,75 +267,126 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
         : { activityTypes: item.activityTypes }),
     };
 
-    setSelectedCategory(categoryData);
-    setModalVisible(true);
+    if (onSlicePress) {
+      onSlicePress(categoryData);
+    } else {
+      setSelectedCategory(categoryData);
+      setModalVisible(true);
+    }
   };
 
-  // Render a custom item to show relationships
-  const renderLegendItem = (item, index) => {
-    return (
-      <View key={index} style={styles.legendItem}>
-        <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-        <Text style={styles.legendEmoji}>{item.emoji}</Text>
-        <View style={styles.relationshipContainer}>
-          <Text style={styles.legendMoodEmoji}>{item.moodEmoji}</Text>
-          {item.type === "Activity" ? (
-            <Text style={styles.legendWeatherEmoji}>{item.weatherEmoji}</Text>
-          ) : (
-            <Text style={styles.legendActivityEmoji}>{item.activityEmoji}</Text>
-          )}
-        </View>
-        <Text style={styles.legendText}>
-          {item.name} ({Math.round((item.value / totalLogs) * 100)}%)
-        </Text>
-      </View>
-    );
-  };
+  const totalLogs = relationshipData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <View style={styles.container}>
-      <View style={styles.chartContainer}>
-        {pieData.length > 0 ? (
-          <PieChart
-            data={pieData}
-            donut
-            radius={chartSize / 2}
-            innerRadius={chartSize / 4}
-            innerCircleColor={"#fff"}
-            centerLabelComponent={() => (
-              <View style={styles.centerLabel}>
-                <Text style={styles.centerLabelText}>{totalLogs}</Text>
-                <Text style={styles.centerLabelSubtext}>Total Logs</Text>
+      {/* Filter toggle */}
+      <View style={styles.filterBadgeContainer}>
+        <TouchableOpacity
+          style={styles.filterBadge}
+          onPress={toggleFilter}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.filterBadgeText}>
+            {selectedFilter === "Activity"
+              ? "🏃‍♂️ Activity Data"
+              : "☁️ Weather Data"}
+          </Text>
+          <Text style={styles.filterToggleHint}>(Tap to switch)</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Summary cards */}
+      <View style={styles.summaryHeader}>
+        <Text style={styles.summaryTitle}>
+          {selectedFilter === "Activity"
+            ? "Activity & Weather Relationships"
+            : "Weather & Activity Relationships"}
+        </Text>
+        <Text style={styles.summarySubtitle}>
+          Sorted by mood: happiest to lowest
+        </Text>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.cardsContainer}
+      >
+        {relationshipData.length > 0 ? (
+          relationshipData.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.relationshipCard, { borderLeftColor: item.color }]}
+              onPress={() => handleCategoryPress(item)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <View style={styles.moodIndicator}>
+                  <Text style={styles.moodScore}>
+                    {item.avgMood.toFixed(1)}
+                  </Text>
+                  <Text style={styles.moodEmoji}>{item.moodEmoji}</Text>
+                </View>
               </View>
-            )}
-            onPress={handleSlicePress}
-            strokeWidth={0}
-            focusOnPress
-            labelPosition={"onBorder"}
-            showValuesAsLabels={false}
-            showGradient={false}
-          />
+
+              <View style={styles.cardDetails}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Frequency:</Text>
+                  <View style={styles.detailValue}>
+                    <Text>{item.value} logs</Text>
+                    <Text style={styles.percentageSmall}>
+                      ({Math.round((item.value / totalLogs) * 100)}%)
+                    </Text>
+                  </View>
+                </View>
+
+                {item.type === "Activity" ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Common Weather:</Text>
+                    <View style={styles.detailValue}>
+                      <Text>{item.topWeather || "N/A"}</Text>
+                      <Text style={styles.detailEmoji}>
+                        {item.weatherEmoji}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Common Activity:</Text>
+                    <View style={styles.detailValue}>
+                      <Text>{item.topActivity || "N/A"}</Text>
+                      <Text style={styles.detailEmoji}>
+                        {item.activityEmoji}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.percentageBar}>
+                  <View
+                    style={[
+                      styles.percentageFill,
+                      {
+                        width: `${Math.min(
+                          100,
+                          Math.round((item.avgMood / 4) * 100)
+                        )}%`,
+                        backgroundColor: item.color,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.percentageText}>
+                    Mood: {Math.round((item.avgMood / 4) * 100)}%
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))
         ) : (
           <Text style={styles.noDataText}>No data available</Text>
         )}
-      </View>
-
-      {/* Legend with relationship indicators */}
-      <View style={styles.legendContainer}>
-        <Text style={styles.legendTitle}>
-          {selectedFilter === "Activity"
-            ? "🎯 Activity | 😊 Mood | ☁️ Weather"
-            : "☁️ Weather | 😊 Mood | 🎯 Activity"}
-        </Text>
-        {pieData.map(renderLegendItem)}
-      </View>
-
-      {/* Legend explanation */}
-      <View style={styles.legendExplanation}>
-        <Text style={styles.explanationText}>
-          Tap on a slice to see detailed relationship data
-        </Text>
-      </View>
+      </ScrollView>
 
       {/* Detail Modal */}
       <CategoryDetailModal
@@ -326,90 +400,162 @@ const ActivityWeatherPieChart = ({ selectedFilter, onSlicePress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    marginTop: 10,
-  },
-  chartContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  centerLabel: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  centerLabelText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: colors.text.primary,
-  },
-  centerLabelSubtext: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  legendContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginTop: 10,
-    paddingHorizontal: 10,
-  },
-  legendTitle: {
-    width: "100%",
-    textAlign: "center",
-    fontSize: 12,
-    color: colors.text.secondary,
-    marginBottom: 8,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 8,
-    marginBottom: 8,
-    width: "45%",
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
-  },
-  legendEmoji: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  relationshipContainer: {
-    flexDirection: "row",
-    marginRight: 4,
-  },
-  legendMoodEmoji: {
-    fontSize: 12,
-    marginRight: 1,
-  },
-  legendWeatherEmoji: {
-    fontSize: 12,
-  },
-  legendActivityEmoji: {
-    fontSize: 12,
-  },
-  legendText: {
-    fontSize: 12,
-    color: colors.text.secondary,
     flex: 1,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  scrollView: {
+    width: "100%",
+    marginBottom: 10,
+  },
+  cardsContainer: {
+    paddingHorizontal: 15,
+    paddingBottom: 10,
   },
   noDataText: {
     fontSize: 14,
     color: colors.text.secondary,
-    marginVertical: 50,
+    marginVertical: 30,
+    textAlign: "center",
   },
-  legendExplanation: {
-    marginTop: 5,
+  filterBadgeContainer: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  filterBadge: {
+    backgroundColor: colors.background.secondary,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  filterBadgeText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.text.secondary,
+  },
+  filterToggleHint: {
+    fontSize: 10,
+    color: colors.text.secondary,
+    marginTop: 2,
+    fontStyle: "italic",
+  },
+  summaryHeader: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  summarySubtitle: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    fontStyle: "italic",
+  },
+  relationshipCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    marginBottom: 15,
+    padding: 15,
+    borderLeftWidth: 4,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    width: "100%",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
-  explanationText: {
-    fontSize: 12,
-    fontStyle: "italic",
+  cardEmoji: {
+    fontSize: 22,
+    marginRight: 8,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.primary,
+    flex: 1,
+  },
+  moodIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.background.secondary,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  moodScore: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginRight: 4,
+  },
+  moodEmoji: {
+    fontSize: 16,
+  },
+  cardCount: {
+    fontSize: 14,
     color: colors.text.secondary,
+    fontWeight: "500",
+  },
+  cardDetails: {
+    marginTop: 5,
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
+  detailValue: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  detailEmoji: {
+    fontSize: 16,
+    marginLeft: 5,
+  },
+  percentageSmall: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginLeft: 4,
+  },
+  percentageBar: {
+    height: 18,
+    backgroundColor: colors.background.secondary,
+    borderRadius: 10,
+    marginTop: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  percentageFill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 10,
+  },
+  percentageText: {
+    position: "absolute",
+    right: 8,
+    top: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.text.primary,
   },
 });
 

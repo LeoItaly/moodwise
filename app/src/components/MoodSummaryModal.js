@@ -16,6 +16,7 @@ const MoodSummaryModal = ({
   isUpdating = false,
   previousMoodData = null,
   customActivities = [],
+  isReadOnly = false,
 }) => {
   const getMoodLabel = (moodIndex) => {
     if (moodIndex === null || moodIndex === undefined) return "Not specified";
@@ -224,14 +225,17 @@ const MoodSummaryModal = ({
             >
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.saveButton]}
-              onPress={onSave}
-            >
-              <Text style={styles.saveButtonText}>
-                {isUpdating ? "Update" : "Save"}
-              </Text>
-            </TouchableOpacity>
+
+            {!isReadOnly && (
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={onSave}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isUpdating ? "Update" : "Save"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>

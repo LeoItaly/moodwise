@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
-import { sampleData, moodIcons } from "../data/appData";
+import { sampleData, moodIcons, weather, activities } from "../data/appData";
 
 const MoodPieChart = ({
   selectedMoodIndex,
@@ -24,6 +24,9 @@ const MoodPieChart = ({
       moodCounts[mood]++;
     });
   });
+
+  // Set total logs to fixed value plus any new logs
+  const totalLogs = 31 + newLogCount;
 
   // Convert mood counts to pie chart data
   const pieData = [
@@ -72,6 +75,92 @@ const MoodPieChart = ({
     return moodCounts[index];
   };
 
+  // Get weather emoji by label
+  const getWeatherEmoji = (weatherLabel) => {
+    const weatherItem = weather.find((w) => w.label === weatherLabel);
+    return weatherItem ? weatherItem.icon : "🌤️";
+  };
+
+  // Get activity emoji by label
+  const getActivityEmoji = (activityLabel) => {
+    const activityItem = activities.find((a) => a.label === activityLabel);
+    return activityItem ? activityItem.icon : "🏃";
+  };
+
+  // Get mood summary for the selected mood
+  const getMoodSummary = (index) => {
+    if (index === null || index === undefined) return null;
+
+    // Filter days with the selected mood
+    const daysWithMood = sampleData.filter((day) => day.moods.includes(index));
+
+    if (daysWithMood.length === 0) return "No data available for this mood";
+
+    // Count activities and weather occurrences
+    const activityCount = {};
+    const weatherCount = {};
+
+    daysWithMood.forEach((day) => {
+      // Count activities
+      if (day.activities && day.activities.length > 0) {
+        day.activities.forEach((activity) => {
+          activityCount[activity] = (activityCount[activity] || 0) + 1;
+        });
+      }
+
+      // Count weather
+      if (day.weather) {
+        weatherCount[day.weather] = (weatherCount[day.weather] || 0) + 1;
+      }
+    });
+
+    // Find most frequent activity and weather
+    let mostFrequentActivity = "none";
+    let maxActivityCount = 0;
+
+    for (const [activity, count] of Object.entries(activityCount)) {
+      if (count > maxActivityCount) {
+        mostFrequentActivity = activity;
+        maxActivityCount = count;
+      }
+    }
+
+    let mostFrequentWeather = "unknown";
+    let maxWeatherCount = 0;
+
+    for (const [weather, count] of Object.entries(weatherCount)) {
+      if (count > maxWeatherCount) {
+        mostFrequentWeather = weather;
+        maxWeatherCount = count;
+      }
+    }
+
+    // Get mood label and emoji
+    const moodLabels = ["Awful", "Bad", "Meh", "Good", "Radiant"];
+    const moodLabel = moodLabels[index];
+    const moodEmoji = getMoodEmoji(index);
+
+    // Get weather and activity emojis
+    const weatherEmoji = getWeatherEmoji(mostFrequentWeather);
+    const activityEmoji =
+      mostFrequentActivity !== "none"
+        ? getActivityEmoji(mostFrequentActivity)
+        : "🚫";
+
+    return `When feeling ${moodLabel} ${moodEmoji}, you most often ${
+      mostFrequentActivity !== "none"
+        ? `do ${mostFrequentActivity} ${activityEmoji}`
+        : "don't log activities 🚫"
+    } during ${mostFrequentWeather} ${weatherEmoji} weather.`;
+  };
+
+  // Configure smoother animation
+  const animationConfig = {
+    animationDuration: 300,
+    delay: 0,
+    easing: "ease-in-out",
+  };
+
   return (
     <View style={styles.pieChartContainer}>
       <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
@@ -84,6 +173,8 @@ const MoodPieChart = ({
           innerRadius={60}
           textSize={12}
           focusOnPress
+          animate={true}
+          animationConfig={animationConfig}
           onPress={(item, index) => onPiePress(index)}
           centerLabelComponent={() => {
             return (
@@ -96,12 +187,13 @@ const MoodPieChart = ({
                     <Text style={styles.centerLabelSubtext}>
                       {getMoodCount(selectedMoodIndex)} logs
                     </Text>
+                    <Text style={styles.totalLogs}>
+                      Total: {totalLogs} logs
+                    </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={styles.centerLabelText}>
-                      {31 + newLogCount}
-                    </Text>
+                    <Text style={styles.centerLabelText}>{totalLogs}</Text>
                     <Text style={styles.centerLabelSubtext}>Total Logs</Text>
                   </>
                 )}
@@ -110,6 +202,15 @@ const MoodPieChart = ({
           }}
         />
       </Animated.View>
+
+      {selectedMoodIndex !== null && (
+        <View style={styles.summaryContainer}>
+          <Text style={styles.summaryText}>
+            {getMoodSummary(selectedMoodIndex)}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.hintContainer}>
         <Text style={styles.hintText}>Tap to highlight mood</Text>
       </View>
@@ -135,6 +236,21 @@ const styles = StyleSheet.create({
   centerLabelSubtext: {
     fontSize: 14,
     color: "#64748b",
+  },
+  totalLogs: {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 4,
+  },
+  summaryContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: "#1e293b",
+    textAlign: "center",
+    lineHeight: 20,
   },
   hintContainer: {
     alignItems: "center",

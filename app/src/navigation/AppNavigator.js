@@ -1,6 +1,5 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Text, View, StyleSheet, Image } from "react-native";
 
@@ -47,75 +46,68 @@ const formatDate = () => {
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: "#22c55e",
-          tabBarInactiveTintColor: "gray",
-          headerShown: true,
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: "#22c55e",
+        tabBarInactiveTintColor: "gray",
+        headerShown: true,
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          headerTitle: () => (
+            <View style={styles.headerContainer}>
+              <Text style={styles.dateText}>{formatDate()}</Text>
+            </View>
+          ),
+          headerLeft: () => (
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("../../MoodWise.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+          ),
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home" size={size} color={color} />
+          ),
         }}
-      >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            headerTitle: () => (
-              <View style={styles.headerContainer}>
-                <Text style={styles.dateText}>{formatDate()}</Text>
-              </View>
-            ),
-            headerLeft: () => (
-              <View style={styles.logoContainer}>
-                <MaterialCommunityIcons
-                  name="brain"
-                  size={30}
-                  color="#22c55e"
-                  style={styles.logo}
-                />
-              </View>
-            ),
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="home" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Calendar"
-          component={CalendarScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons
-                name="calendar"
-                size={size}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Stats"
-          component={StatsScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons
-                name="chart-bar"
-                size={size}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="cog" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+      />
+      <Tab.Screen
+        name="Calendar"
+        component={CalendarScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="calendar" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Stats"
+        component={StatsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chart-bar"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="cog" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
   );
 }
 
@@ -127,10 +119,11 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     marginLeft: 15,
+    justifyContent: "center",
   },
   logo: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
   },
   dateText: {
     fontSize: 16,

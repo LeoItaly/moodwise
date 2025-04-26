@@ -14,9 +14,9 @@ const MoodSlopePlot = ({ onDataPress }) => {
   // Get March data from sampleData (should be a full month)
   const chartData = sampleData.filter((day) => day.date.startsWith("2025-03"));
 
-  // Order by date, latest first
+  // Order by date, earliest first (beginning to end of month)
   const sortedData = [...chartData].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   // Chart dimensions
@@ -144,8 +144,22 @@ const MoodSlopePlot = ({ onDataPress }) => {
                 ? 2 + Math.abs(eveningMood - morningMood)
                 : 2;
 
+              // Find the lowest y-position to draw vertical dashed line from
+              const lowestY = Math.max(morningY, eveningY);
+
               return (
                 <G key={`day-${index}`}>
+                  {/* Vertical dashed line from x-axis to mood data */}
+                  <Line
+                    x1={xPosition}
+                    y1={chartHeight - paddingBottom}
+                    x2={xPosition}
+                    y2={lowestY}
+                    stroke={colors.border.light}
+                    strokeWidth={1}
+                    strokeDasharray="3,3"
+                  />
+
                   {/* Vertical line showing mood change (only if mood changed) */}
                   {moodChanged && (
                     <Line
@@ -230,12 +244,6 @@ const MoodSlopePlot = ({ onDataPress }) => {
           })}
         </View>
       </ScrollView>
-
-      {/* Labels */}
-      <View style={styles.labels}>
-        <Text style={styles.timeLabel}>Morning ☀️</Text>
-        <Text style={styles.timeLabel}>Evening 🌙</Text>
-      </View>
 
       {/* Legend */}
       <View style={styles.legend}>

@@ -9,7 +9,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { colors, borderRadius, spacing, textStyles } from "../constants";
 
-const RecentMoods = ({ onCalendarPress, allMoodData = [] }) => {
+const RecentMoods = ({ onCalendarPress, onDayPress, allMoodData = [] }) => {
   // Create data for the last 14 days based on today's date
   const biWeeklyData = useMemo(() => {
     const today = new Date();
@@ -39,6 +39,14 @@ const RecentMoods = ({ onCalendarPress, allMoodData = [] }) => {
         isToday: i === 0,
         // Use actual mood data if available, otherwise set moods to null
         moods: moodData ? moodData.moods : [null, null],
+        // Store the full mood data if available
+        fullData: moodData || {
+          date: dateString,
+          moods: [null, null],
+          activities: [],
+          weather: null,
+          notes: "",
+        },
       });
     }
 
@@ -106,7 +114,15 @@ const RecentMoods = ({ onCalendarPress, allMoodData = [] }) => {
                 // Add a highlight border for today
                 item.isToday && styles.todayBubble,
               ]}
-              onPress={() => onCalendarPress({ dateString: item.date })}
+              onPress={() => {
+                // If onDayPress is provided, use it for bi-weekly calendar clicks
+                if (onDayPress) {
+                  onDayPress(item.fullData);
+                } else {
+                  // Otherwise fall back to the calendar navigation
+                  onCalendarPress({ dateString: item.date });
+                }
+              }}
             >
               <Text
                 style={[

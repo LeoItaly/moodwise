@@ -81,6 +81,8 @@ export default function HomeScreen() {
   const [customActivities, setCustomActivities] = useState([]);
   const [currentStreak, setCurrentStreak] = useState(31); // Start with 31-day streak for demo
   const [previousStreak, setPreviousStreak] = useState(31); // Match initial previous streak
+  const [calendarSelectedDay, setCalendarSelectedDay] = useState(null);
+  const [showCalendarSummary, setShowCalendarSummary] = useState(false);
 
   // Milestone values for streak celebrations
   const streakMilestones = [3, 7, 14, 30, 60, 90, 180, 365];
@@ -559,6 +561,10 @@ export default function HomeScreen() {
               navigation.navigate("Calendar");
             }
           }}
+          onDayPress={(dayData) => {
+            setCalendarSelectedDay(dayData);
+            setShowCalendarSummary(true);
+          }}
           allMoodData={allMoodData}
         />
       </LinearGradient>
@@ -730,6 +736,30 @@ export default function HomeScreen() {
         previousMoodData={previousMoodData}
         customActivities={customActivities}
       />
+
+      {/* Calendar Day MoodSummaryModal */}
+      {calendarSelectedDay && (
+        <MoodSummaryModal
+          visible={showCalendarSummary}
+          onClose={() => setShowCalendarSummary(false)}
+          dateString={new Date(calendarSelectedDay.date).toLocaleDateString(
+            undefined,
+            {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }
+          )}
+          morningMood={calendarSelectedDay.moods[0]}
+          eveningMood={calendarSelectedDay.moods[1]}
+          selectedActivities={calendarSelectedDay.activities || []}
+          selectedWeather={calendarSelectedDay.weather}
+          notes={calendarSelectedDay.notes || ""}
+          isTodaysMood={calendarSelectedDay.date === formatDateISO(new Date())}
+          isReadOnly={true}
+        />
+      )}
     </ScrollView>
   );
 }

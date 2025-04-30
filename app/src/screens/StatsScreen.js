@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Animated,
+  Linking,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import ChartCard from "../components/ChartCard";
@@ -25,6 +26,7 @@ import { sampleData, activities, weather } from "../data/appData";
 import MoodPieChart from "../components/MoodPieChart";
 import ActivityWeatherPieChart from "../components/ActivityWeatherPieChart";
 import WeeklyMoodTrend from "../components/WeeklyMoodTrend";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function StatsScreen() {
   const [selectedData, setSelectedData] = useState(null);
@@ -32,6 +34,8 @@ export default function StatsScreen() {
   const [selectedMoodIndex, setSelectedMoodIndex] = useState(null);
   const [newMoodLogCount, setNewMoodLogCount] = useState(0);
   const pulseAnim = new Animated.Value(1);
+  const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const buttonOpacityAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Start pulsing animation for pie chart
@@ -49,6 +53,39 @@ export default function StatsScreen() {
         }),
       ])
     ).start();
+
+    // Create a sequence for the button animation
+    const buttonPulseSequence = Animated.sequence([
+      // Scale up and increase opacity
+      Animated.parallel([
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonOpacityAnim, {
+          toValue: 0.8,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Scale down and restore opacity
+      Animated.parallel([
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonOpacityAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]);
+
+    // Start the looping animation for the button
+    Animated.loop(buttonPulseSequence).start();
   }, []);
 
   // Process data for each chart type before displaying in the modal
@@ -105,6 +142,12 @@ export default function StatsScreen() {
     setSelectedMoodIndex(index);
   };
 
+  const handleAdvancedAnalysisLink = () => {
+    Linking.openURL(
+      "https://observablehq.com/@dtu/personaldataintegration_g20"
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <ChartCard title="Mood Distribution">
@@ -123,12 +166,18 @@ export default function StatsScreen() {
         <Text style={styles.chartDescription}>
           Your average daily mood over the past week
         </Text>
+        <Text style={styles.interactionHint}>
+          Tap on any data point to see details
+        </Text>
         <WeeklyMoodTrend onDataPress={handleDataPress} />
       </ChartCard>
 
       <ChartCard title="Daily Mood Changes">
         <Text style={styles.chartDescription}>
           How your mood shifts from morning to evening
+        </Text>
+        <Text style={styles.interactionHint}>
+          Tap on any data point to see details
         </Text>
         <MoodSlopePlot onDataPress={handleDataPress} />
       </ChartCard>
@@ -153,6 +202,36 @@ export default function StatsScreen() {
           onSlicePress={handleDataPress}
         />
       </ChartCard>
+
+      {/* Advanced Data Analysis Promotion */}
+      <LinearGradient
+        colors={["#ffffff", "#f0f9ff", "#ffffff"]}
+        style={[styles.chartContainer, styles.advancedAnalysisContainer]}
+      >
+        <Text style={styles.advancedAnalysisTitle}>Advanced Analysis</Text>
+        <Text style={styles.chartDescription}>
+          Explore deeper and more complex patterns in your mood data
+        </Text>
+        <Animated.View
+          style={{
+            transform: [{ scale: buttonScaleAnim }],
+            opacity: buttonOpacityAnim,
+            alignSelf: "center",
+            marginTop: spacing.md,
+          }}
+        >
+          <TouchableOpacity
+            style={styles.advancedAnalysisButton}
+            onPress={handleAdvancedAnalysisLink}
+            accessibilityRole="link"
+            accessibilityLabel="Visit advanced data analysis website"
+          >
+            <Text style={styles.advancedAnalysisButtonText}>
+              View detailed insights
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </LinearGradient>
 
       {/* Modal for Details */}
       <DetailModal
@@ -209,5 +288,46 @@ const styles = StyleSheet.create({
     ...textStyles.body,
     color: colors.text.secondary,
     marginBottom: spacing.md,
+  },
+  interactionHint: {
+    ...textStyles.caption,
+    color: colors.primary,
+    marginBottom: spacing.sm,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  chartContainer: {
+    padding: spacing.xl,
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: "visible",
+  },
+  advancedAnalysisContainer: {
+    marginBottom: spacing.xl,
+  },
+  advancedAnalysisTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.text.primary,
+    textAlign: "center",
+    marginBottom: spacing.md,
+  },
+  advancedAnalysisButton: {
+    ...buttons.primary,
+    margin: 0,
+    width: "100%",
+  },
+  advancedAnalysisButtonText: {
+    ...buttons.primaryText,
+    textAlign: "center",
   },
 });

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,8 +11,10 @@ import { sampleData, moodIcons } from "../data/appData";
 import { colors, spacing } from "../constants";
 
 const MoodSlopePlot = ({ onDataPress }) => {
+  const [activeDay, setActiveDay] = useState(null);
+
   // Get March data from sampleData (should be a full month)
-  const chartData = sampleData.filter((day) => day.date.startsWith("2025-03"));
+  const chartData = sampleData.filter((day) => day.date.startsWith("2025-04"));
 
   // Order by date, earliest first (beginning to end of month)
   const sortedData = [...chartData].sort(
@@ -49,10 +51,15 @@ const MoodSlopePlot = ({ onDataPress }) => {
     return moodIcons.find((mood) => mood.id === moodValue + 1).color;
   };
 
-  // Format date as day/month
+  // Get day of week and date as DD/MM, matching WeeklyMoodTrend format
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return `${date.getDate()}`;
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayOfWeek = days[date.getDay()];
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+
+    return { dayOfWeek, formatted: `${day}/${month}` };
   };
 
   // Group mood trends for stats
@@ -77,7 +84,7 @@ const MoodSlopePlot = ({ onDataPress }) => {
     <View style={styles.container}>
       {/* Month heading and stats */}
       <View style={styles.headerContainer}>
-        <Text style={styles.monthTitle}>March 2025</Text>
+        <Text style={styles.monthTitle}>April 2025</Text>
         <View style={styles.statsContainer}>
           <Text style={[styles.statText, { color: colors.mood.great }]}>
             Improved: {moodTrends.improved}
@@ -130,6 +137,7 @@ const MoodSlopePlot = ({ onDataPress }) => {
               const eveningY = moodToY(eveningMood);
               const xPosition = paddingLeft + index * dayWidth + dayWidth / 2;
               const moodChanged = morningMood !== eveningMood;
+              const isActive = activeDay === index;
 
               // Line color based on the direction of mood change
               const lineColor =
@@ -207,15 +215,24 @@ const MoodSlopePlot = ({ onDataPress }) => {
                     </SvgText>
                   )}
 
-                  {/* Date label below each column */}
+                  {/* Date labels below each column - using same format as WeeklyMoodTrend */}
                   <SvgText
                     x={xPosition}
-                    y={chartHeight - 10}
+                    y={chartHeight - 20}
                     fontSize={10}
                     fill={colors.text.secondary}
                     textAnchor="middle"
                   >
-                    {formatDate(day.date)}
+                    {formatDate(day.date).dayOfWeek}
+                  </SvgText>
+                  <SvgText
+                    x={xPosition}
+                    y={chartHeight - 5}
+                    fontSize={10}
+                    fill={colors.text.secondary}
+                    textAnchor="middle"
+                  >
+                    {formatDate(day.date).formatted}
                   </SvgText>
                 </G>
               );
@@ -238,7 +255,10 @@ const MoodSlopePlot = ({ onDataPress }) => {
                     height: plotHeight,
                   },
                 ]}
-                onPress={() => onDataPress(day)}
+                onPress={() => {
+                  setActiveDay(index);
+                  onDataPress(day);
+                }}
               />
             );
           })}

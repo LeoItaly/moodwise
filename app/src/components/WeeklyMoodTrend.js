@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,43 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Animated,
 } from "react-native";
-import { Svg, Path, Line, Text as SvgText, Circle, G } from "react-native-svg";
+import {
+  Svg,
+  Path,
+  Line,
+  Text as SvgText,
+  Circle,
+  G,
+  Rect,
+} from "react-native-svg";
 import { sampleData, moodIcons } from "../data/appData";
 import { colors, spacing } from "../constants";
 
 const WeeklyMoodTrend = ({ onDataPress }) => {
+  const [activePoint, setActivePoint] = useState(null);
+  const [hoverPoint, setHoverPoint] = useState(null);
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Create a pulse animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
   // Get the last 7 days of data from the sample data
   const getLastSevenDays = () => {
     // Sort by date, latest first
@@ -74,6 +105,12 @@ const WeeklyMoodTrend = ({ onDataPress }) => {
   const getMoodColor = (moodValue) => {
     const roundedMood = Math.round(moodValue);
     return moodIcons.find((mood) => mood.id === roundedMood + 1).color;
+  };
+
+  // Get mood label from value
+  const getMoodLabel = (moodValue) => {
+    const labels = ["Awful", "Bad", "Neutral", "Good", "Radiant"];
+    return labels[Math.round(moodValue)];
   };
 
   // Create line path for the trend
@@ -142,6 +179,7 @@ const WeeklyMoodTrend = ({ onDataPress }) => {
             const avgMood = getDayAverageMood(day);
             const x = paddingLeft + index * xInterval;
             const y = moodToY(avgMood);
+            const isActive = activePoint === index || hoverPoint === index;
 
             return (
               <G key={`point-${index}`}>
@@ -149,11 +187,57 @@ const WeeklyMoodTrend = ({ onDataPress }) => {
                 <Circle
                   cx={x}
                   cy={y}
-                  r={6}
-                  fill={colors.white}
+                  r={isActive ? 8 : 6}
+                  fill={isActive ? getMoodColor(avgMood) : colors.white}
                   stroke={getMoodColor(avgMood)}
                   strokeWidth={2}
                 />
+
+                {/* Indicator ring to show it's interactive */}
+                <Circle
+                  cx={x}
+                  cy={y}
+                  r={10}
+                  fill="transparent"
+                  stroke={getMoodColor(avgMood)}
+                  strokeWidth={1}
+                  strokeDasharray="2,2"
+                  opacity={isActive ? 1 : 0.6}
+                />
+
+                {/* Tooltip when hovering/active */}
+                {isActive && (
+                  <G>
+                    <Rect
+                      x={x - 40}
+                      y={y - 45}
+                      width={80}
+                      height={35}
+                      rx={5}
+                      fill={colors.white}
+                      stroke={colors.border.light}
+                    />
+                    <SvgText
+                      x={x}
+                      y={y - 30}
+                      fontSize={12}
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      fill={getMoodColor(avgMood)}
+                    >
+                      {getMoodLabel(avgMood)}
+                    </SvgText>
+                    <SvgText
+                      x={x}
+                      y={y - 15}
+                      fontSize={10}
+                      textAnchor="middle"
+                      fill={colors.text.secondary}
+                    >
+                      Click for details
+                    </SvgText>
+                  </G>
+                )}
 
                 {/* Day labels (showing formatted date below x-axis) */}
                 <SvgText
@@ -201,8 +285,13 @@ const WeeklyMoodTrend = ({ onDataPress }) => {
                   ...day,
                   averageMood: getDayAverageMood(day),
                 };
+                setActivePoint(index);
                 onDataPress(dayWithAvg);
               }}
+              onPressIn={() => setActivePoint(index)}
+              onPressOut={() => setActivePoint(null)}
+              onMouseEnter={() => setHoverPoint(index)}
+              onMouseLeave={() => setHoverPoint(null)}
             />
           );
         })}

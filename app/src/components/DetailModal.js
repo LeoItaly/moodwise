@@ -11,6 +11,37 @@ const DetailModal = ({ visible, onClose, selectedDay }) => {
     return activity ? `${activity.icon} ${activity.label}` : activityName;
   };
 
+  // Format date parts separately for styling
+  const getFormattedDateParts = (dateString) => {
+    if (!dateString) return { dayName: "No", date: "Date" };
+
+    const date = new Date(dateString);
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const dayName = days[date.getDay()];
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString().slice(2); // Get last 2 digits of year
+
+    return {
+      dayName,
+      date: `${day}/${month}/${year}`,
+    };
+  };
+
+  // For compatibility with other code still using the old format
+  const formatDate = (dateString) => {
+    const { dayName, date } = getFormattedDateParts(dateString);
+    return `${dayName}, ${date}`;
+  };
+
   // Check if this is aggregated data (from bar chart) or day data
   const isAggregatedData = selectedDay && selectedDay.type;
   // Check if this is count data from activities/weather bar chart
@@ -20,44 +51,87 @@ const DetailModal = ({ visible, onClose, selectedDay }) => {
   const renderAggregatedData = () => {
     if (!selectedDay) return null;
 
+    // Get mood emoji from mood value
+    const getMoodEmoji = (moodValue) => {
+      // Round to nearest integer for emoji lookup
+      const roundedMood = Math.round(moodValue);
+      // Find the emoji based on id = roundedMood + 1
+      return moodIcons.find((mood) => mood.id === roundedMood + 1)?.emoji;
+    };
+
+    // Get color for a mood value
+    const getMoodColor = (moodValue) => {
+      const roundedMood = Math.round(moodValue);
+      return moodIcons.find((mood) => mood.id === roundedMood + 1)?.color;
+    };
+
     // If it's from the count chart, show more detailed information
     if (isCountData) {
+      // Sort days by date, most recent first
+      const sortedDays = selectedDay.days
+        ? [...selectedDay.days].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+          )
+        : [];
+
       return (
         <>
-          <Text style={styles.modalTitle}>
-            {selectedDay.type}: {selectedDay.name}
-          </Text>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Times Logged:</Text>
-            <Text style={styles.sectionText}>{selectedDay.count}</Text>
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Average Mood:</Text>
-            <Text style={styles.sectionText}>
-              {selectedDay.value.toFixed(1)}
-            </Text>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dayName}>{selectedDay.type}</Text>
+            <Text style={styles.dateValue}>{selectedDay.name}</Text>
           </View>
 
-          {selectedDay.days && selectedDay.days.length > 0 && (
+          <View style={styles.contentContainer}>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Days:</Text>
-              <View style={styles.daysList}>
-                {selectedDay.days.slice(0, 5).map((day, index) => (
-                  <View key={index} style={styles.dayItem}>
-                    <Text style={styles.dayDate}>{day.date}</Text>
-                    <Text style={styles.dayAvgMood}>
-                      Avg Mood: {((day.moods[0] + day.moods[1]) / 2).toFixed(1)}
-                    </Text>
-                  </View>
-                ))}
-                {selectedDay.days.length > 5 && (
-                  <Text style={styles.moreText}>
-                    +{selectedDay.days.length - 5} more days...
-                  </Text>
-                )}
-              </View>
+              <Text style={styles.sectionTitle}>Times Logged:</Text>
+              <Text style={styles.sectionText}>{selectedDay.count}</Text>
             </View>
-          )}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Average Mood:</Text>
+              <Text
+                style={[
+                  styles.moodEmoji,
+                  { color: getMoodColor(selectedDay.value) },
+                ]}
+              >
+                {getMoodEmoji(selectedDay.value)}
+              </Text>
+            </View>
+
+            {sortedDays.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Latest Days:</Text>
+                <View style={styles.daysList}>
+                  {sortedDays.slice(0, 3).map((day, index) => {
+                    const avgMood = (day.moods[0] + day.moods[1]) / 2;
+                    return (
+                      <View key={index} style={styles.dayItem}>
+                        <Text style={styles.dayDate}>
+                          {formatDate(day.date)}
+                        </Text>
+                        <View style={styles.dayMoodRow}>
+                          <Text style={styles.dayAvgMoodLabel}>Avg Mood: </Text>
+                          <Text
+                            style={[
+                              styles.dayMoodEmoji,
+                              { color: getMoodColor(avgMood) },
+                            ]}
+                          >
+                            {getMoodEmoji(avgMood)}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                  {sortedDays.length > 3 && (
+                    <Text style={styles.moreText}>
+                      +{sortedDays.length - 3} more days...
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+          </View>
         </>
       );
     }
@@ -65,16 +139,27 @@ const DetailModal = ({ visible, onClose, selectedDay }) => {
     // Original aggregated data rendering
     return (
       <>
-        <Text style={styles.modalTitle}>
-          {selectedDay.type}: {selectedDay.name}
-        </Text>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Average Mood:</Text>
-          <Text style={styles.sectionText}>{selectedDay.value.toFixed(1)}</Text>
+        <View style={styles.dateContainer}>
+          <Text style={styles.dayName}>{selectedDay.type}</Text>
+          <Text style={styles.dateValue}>{selectedDay.name}</Text>
         </View>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Times Logged:</Text>
-          <Text style={styles.sectionText}>{selectedDay.count}</Text>
+
+        <View style={styles.contentContainer}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Average Mood:</Text>
+            <Text
+              style={[
+                styles.moodEmoji,
+                { color: getMoodColor(selectedDay.value) },
+              ]}
+            >
+              {getMoodEmoji(selectedDay.value)}
+            </Text>
+          </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Times Logged:</Text>
+            <Text style={styles.sectionText}>{selectedDay.count}</Text>
+          </View>
         </View>
       </>
     );
@@ -84,76 +169,84 @@ const DetailModal = ({ visible, onClose, selectedDay }) => {
   const renderDayData = () => {
     if (!selectedDay) return null;
 
+    const { dayName, date } = getFormattedDateParts(selectedDay?.date);
+
     return (
       <>
-        <Text style={styles.modalTitle}>{selectedDay?.date || "No Data"}</Text>
-        {selectedDay?.moods?.length > 0 ? (
-          <>
-            <View style={styles.moodSection}>
-              <Text style={styles.sectionTitle}>Morning Mood:</Text>
-              <Text
-                style={[
-                  styles.moodEmoji,
+        <View style={styles.dateContainer}>
+          <Text style={styles.dayName}>{dayName}</Text>
+          <Text style={styles.dateValue}>{date}</Text>
+        </View>
+
+        <View style={styles.contentContainer}>
+          {selectedDay?.moods?.length > 0 ? (
+            <>
+              <View style={styles.moodSection}>
+                <Text style={styles.sectionTitle}>Morning Mood:</Text>
+                <Text
+                  style={[
+                    styles.moodEmoji,
+                    {
+                      color: moodIcons.find(
+                        (m) => m.id === selectedDay.moods[0] + 1
+                      )?.color,
+                    },
+                  ]}
+                >
                   {
-                    color: moodIcons.find(
-                      (m) => m.id === selectedDay.moods[0] + 1
-                    )?.color,
-                  },
-                ]}
-              >
-                {
-                  moodIcons.find((m) => m.id === selectedDay.moods[0] + 1)
-                    ?.emoji
-                }
-              </Text>
-            </View>
-            <View style={styles.moodSection}>
-              <Text style={styles.sectionTitle}>Evening Mood:</Text>
-              <Text
-                style={[
-                  styles.moodEmoji,
-                  {
-                    color: moodIcons.find(
-                      (m) => m.id === selectedDay.moods[1] + 1
-                    )?.color,
-                  },
-                ]}
-              >
-                {
-                  moodIcons.find((m) => m.id === selectedDay.moods[1] + 1)
-                    ?.emoji
-                }
-              </Text>
-            </View>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Activities:</Text>
-              <Text style={styles.sectionText}>
-                {selectedDay.activities.length > 0
-                  ? selectedDay.activities.map(getActivityWithIcon).join(", ")
-                  : "None"}
-              </Text>
-            </View>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Weather:</Text>
-              <Text style={styles.sectionText}>
-                {weather.find((w) => w.label === selectedDay.weather)?.icon}{" "}
-                {selectedDay.weather}
-              </Text>
-            </View>
-            {selectedDay.notes && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Notes:</Text>
-                <Text style={styles.sectionText}>
-                  {selectedDay.notes.length > 100
-                    ? selectedDay.notes.substring(0, 100) + "..."
-                    : selectedDay.notes}
+                    moodIcons.find((m) => m.id === selectedDay.moods[0] + 1)
+                      ?.emoji
+                  }
                 </Text>
               </View>
-            )}
-          </>
-        ) : (
-          <Text style={styles.noDataText}>No data for this day.</Text>
-        )}
+              <View style={styles.moodSection}>
+                <Text style={styles.sectionTitle}>Evening Mood:</Text>
+                <Text
+                  style={[
+                    styles.moodEmoji,
+                    {
+                      color: moodIcons.find(
+                        (m) => m.id === selectedDay.moods[1] + 1
+                      )?.color,
+                    },
+                  ]}
+                >
+                  {
+                    moodIcons.find((m) => m.id === selectedDay.moods[1] + 1)
+                      ?.emoji
+                  }
+                </Text>
+              </View>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Activities:</Text>
+                <Text style={styles.sectionText}>
+                  {selectedDay.activities.length > 0
+                    ? selectedDay.activities.map(getActivityWithIcon).join(", ")
+                    : "None"}
+                </Text>
+              </View>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Weather:</Text>
+                <Text style={styles.sectionText}>
+                  {weather.find((w) => w.label === selectedDay.weather)?.icon}{" "}
+                  {selectedDay.weather}
+                </Text>
+              </View>
+              {selectedDay.notes && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Notes:</Text>
+                  <Text style={styles.sectionText}>
+                    {selectedDay.notes.length > 100
+                      ? selectedDay.notes.substring(0, 100) + "..."
+                      : selectedDay.notes}
+                  </Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.noDataText}>No data for this day.</Text>
+          )}
+        </View>
       </>
     );
   };
@@ -191,11 +284,32 @@ const styles = StyleSheet.create({
     width: "80%",
     maxHeight: "80%",
   },
-  modalTitle: {
+  dateContainer: {
+    backgroundColor: "#f5f5f5",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    alignItems: "center",
+  },
+  dayName: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 20,
     color: "#333",
+    textAlign: "center",
+  },
+  dateValue: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
+  contentContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    paddingTop: 15,
   },
   moodSection: {
     flexDirection: "row",
@@ -248,13 +362,20 @@ const styles = StyleSheet.create({
   },
   dayDate: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#333",
-    marginBottom: 2,
   },
-  dayAvgMood: {
+  dayMoodRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  dayAvgMoodLabel: {
     fontSize: 12,
     color: "#666",
+  },
+  dayMoodEmoji: {
+    fontSize: 16,
   },
   moreText: {
     fontSize: 12,

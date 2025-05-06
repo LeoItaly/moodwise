@@ -227,7 +227,7 @@ export const sampleData = [
     date: "2025-04-13",
     moods: [3, 3],
     activities: ["Running", "Badminton"],
-    weather: "Sunny",
+    weather: "Cloudy",
     notes: "Great day! Had a nice run and badminton session.",
   },
   {
@@ -257,9 +257,9 @@ export const sampleData = [
     date: "2025-04-09",
     moods: [2, 3],
     activities: ["Walking", "Yoga"],
-    weather: "Windy",
+    weather: "Snowy",
     notes:
-      "Average day, but the walk and yoga helped clear my mind despite the wind.",
+      "Average day, but the walk and yoga helped clear my mind despite the snow.",
   },
   {
     date: "2025-04-08",
@@ -316,7 +316,8 @@ export const sampleData = [
     date: "2025-04-01",
     moods: [4, 4],
     activities: ["Yoga", "Walking"],
-    weather: "Sunny",
-    notes: "Perfect day of balance - calming yoga and refreshing walk.",
+    weather: "Cloudy",
+    notes:
+      "Perfect day of balance - calming yoga and refreshing walk despite the clouds.",
   },
 ];

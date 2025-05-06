@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 import { sampleData, moodIcons, weather, activities } from "../data/appData";
@@ -9,6 +9,20 @@ const MoodPieChart = ({
   pulseAnim,
   newLogCount = 0,
 }) => {
+  // Animation reference for smooth transitions
+  const sliceAnimValue = useRef(new Animated.Value(0)).current;
+
+  // Animate when selection changes
+  useEffect(() => {
+    Animated.timing(sliceAnimValue, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      sliceAnimValue.setValue(0);
+    });
+  }, [selectedMoodIndex]);
+
   // Calculate mood distribution for pie chart
   const moodCounts = {
     0: 0, // awful
@@ -64,9 +78,16 @@ const MoodPieChart = ({
 
   // Get mood emoji from moodIcons based on index
   const getMoodEmoji = (index) => {
-    if (index === null || index === undefined) return null;
+    if (index === null || index === undefined) return "😐";
+
     // Index is 0-4 in our data, but moodIcons uses 1-5 for id
-    return moodIcons[index].emoji;
+    // Check if index is valid
+    if (index < 0 || index >= moodIcons.length) {
+      return "😐"; // Default emoji for invalid index
+    }
+
+    const moodIcon = moodIcons[index];
+    return moodIcon ? moodIcon.emoji : "😐";
   };
 
   // Get specific mood count
@@ -77,12 +98,14 @@ const MoodPieChart = ({
 
   // Get weather emoji by label
   const getWeatherEmoji = (weatherLabel) => {
+    if (!weatherLabel) return "🌤️";
     const weatherItem = weather.find((w) => w.label === weatherLabel);
     return weatherItem ? weatherItem.icon : "🌤️";
   };
 
   // Get activity emoji by label
   const getActivityEmoji = (activityLabel) => {
+    if (!activityLabel) return "🏃";
     const activityItem = activities.find((a) => a.label === activityLabel);
     return activityItem ? activityItem.icon : "🏃";
   };
@@ -156,9 +179,24 @@ const MoodPieChart = ({
 
   // Configure smoother animation
   const animationConfig = {
-    animationDuration: 300,
+    animationDuration: 250,
     delay: 0,
-    easing: "ease-in-out",
+    easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
+    useNativeDriver: true,
+  };
+
+  // Additional tap animation for the slices
+  const tapAnimation = (index) => {
+    // Create spring animation effect for smoother interaction
+    Animated.spring(sliceAnimValue, {
+      toValue: 1,
+      friction: 7,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+
+    // Call the parent's onPiePress function
+    onPiePress(index);
   };
 
   return (
@@ -175,7 +213,14 @@ const MoodPieChart = ({
           focusOnPress
           animate={true}
           animationConfig={animationConfig}
-          onPress={(item, index) => onPiePress(index)}
+          onPress={(item, index) => tapAnimation(index)}
+          // Added props to improve appearance and animation
+          focusConfig={{
+            scaleSize: 1.07,
+            stroke: true,
+            strokeWidth: 2,
+            strokeColor: "#fff",
+          }}
           centerLabelComponent={() => {
             return (
               <View style={styles.centerLabel}>

@@ -139,7 +139,12 @@ export default function StatsScreen() {
   });
 
   const handlePiePress = (index) => {
-    setSelectedMoodIndex(index);
+    // If selecting the same slice, deselect it
+    if (selectedMoodIndex === index) {
+      setSelectedMoodIndex(null);
+    } else {
+      setSelectedMoodIndex(index);
+    }
   };
 
   const handleAdvancedAnalysisLink = () => {

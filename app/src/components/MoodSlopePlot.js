@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { Svg, Line, Text as SvgText, G } from "react-native-svg";
+import { Svg, Line, Text as SvgText, G, Circle } from "react-native-svg";
 import { sampleData, moodIcons } from "../data/appData";
 import { colors, spacing } from "../constants";
 
 const MoodSlopePlot = ({ onDataPress }) => {
   const [activeDay, setActiveDay] = useState(null);
 
-  // Get March data from sampleData (should be a full month)
+  // Get April data from sampleData
   const chartData = sampleData.filter((day) => day.date.startsWith("2025-04"));
 
   // Order by date, earliest first (beginning to end of month)
@@ -22,11 +22,11 @@ const MoodSlopePlot = ({ onDataPress }) => {
   );
 
   // Chart dimensions
-  const dayWidth = 40; // Width allocated for each day
-  const chartWidth = Math.max(350, dayWidth * sortedData.length); // Dynamic width based on number of days
+  const dayWidth = 45; // Increase width to ensure all days are visible
+  const chartWidth = Math.max(400, dayWidth * sortedData.length + 60); // Wider canvas with padding
   const chartHeight = 250;
-  const paddingLeft = 30;
-  const paddingRight = 20;
+  const paddingLeft = 40; // Increase left padding
+  const paddingRight = 30; // Increase right padding
   const paddingTop = 30;
   const paddingBottom = 40;
 
@@ -214,6 +214,8 @@ const MoodSlopePlot = ({ onDataPress }) => {
                       {getMoodEmoji(morningMood)}
                     </SvgText>
                   )}
+
+ 
 
                   {/* Date labels below each column - using same format as WeeklyMoodTrend */}
                   <SvgText

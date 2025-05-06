@@ -46,11 +46,11 @@ export const activities = [
 export const sampleData = [
   {
     date: "2025-05-06",
-    moods: [4, 5],
+    moods: [1, 2],
     activities: ["Running", "Yoga"],
     weather: "Sunny",
     notes:
-      "Perfect day! Morning run and evening yoga session really boosted my spirits.",
+      "Not a good day overall. Even the run and yoga session didn't help much with my mood.",
   },
   {
     date: "2025-05-05",
@@ -85,11 +85,11 @@ export const sampleData = [
   },
   {
     date: "2025-05-01",
-    moods: [5, 4],
+    moods: [1, 1],
     activities: ["Gymnastics", "Walking"],
     weather: "Sunny",
     notes:
-      "May Day celebration with morning gymnastics and a lovely evening walk.",
+      "May Day celebration didn't go well. Feeling down despite the sunny weather.",
   },
   {
     date: "2025-04-30",

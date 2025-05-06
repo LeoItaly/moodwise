@@ -20,17 +20,25 @@ const MoodSummaryModal = ({
 }) => {
   const getMoodLabel = (moodIndex) => {
     if (moodIndex === null || moodIndex === undefined) return "Not specified";
+
+    // Ensure index is within valid range
+    if (moodIndex < 0 || moodIndex >= moodIcons.length) {
+      return "Invalid mood";
+    }
+
     const mood = moodIcons[moodIndex];
-    return `${mood.emoji} ${mood.label}`;
+    return mood ? `${mood.emoji} ${mood.label}` : "Invalid mood";
   };
 
   const getWeatherIcon = (weatherName) => {
     if (!weatherName) return null;
     const weatherOption = weather.find((w) => w.label === weatherName);
-    return weatherOption ? weatherOption.icon : null;
+    return weatherOption ? weatherOption.icon : "🌤️"; // Default weather icon as fallback
   };
 
   const getActivityIcon = (activityName) => {
+    if (!activityName) return "❓"; // Default for empty activity
+
     // Check in standard activities first
     const activity = activities.find((a) => a.label === activityName);
     if (activity) return activity.icon;
@@ -40,10 +48,10 @@ const MoodSummaryModal = ({
       const customActivity = customActivities.find(
         (a) => a.label === activityName
       );
-      if (customActivity) return customActivity.icon;
+      if (customActivity && customActivity.icon) return customActivity.icon;
     }
 
-    return null;
+    return "🔄"; // Default icon if not found
   };
 
   // Get display name for an activity
@@ -127,7 +135,8 @@ const MoodSummaryModal = ({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>
-            {isTodaysMood ? "Today's Mood" : "Mood Summary"} - {dateString}
+            {isTodaysMood ? "Today's Mood" : "Mood Summary"} -{" "}
+            {dateString || "No Date"}
           </Text>
 
           {isUpdating && previousMoodData && (

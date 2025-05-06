@@ -97,20 +97,40 @@ const WeeklyMoodTrend = ({ onDataPress }) => {
   const getMoodEmoji = (moodValue) => {
     // Round to nearest integer for emoji lookup
     const roundedMood = Math.round(moodValue);
+
+    // Validate mood value range and provide fallback
+    if (roundedMood < 0 || roundedMood > 4) {
+      return "😐"; // Default fallback emoji
+    }
+
     // Find the icon based on id = moodValue + 1
-    return moodIcons.find((mood) => mood.id === roundedMood + 1).emoji;
+    const moodIcon = moodIcons.find((mood) => mood.id === roundedMood + 1);
+    return moodIcon ? moodIcon.emoji : "😐";
   };
 
   // Get color for a specific mood level
   const getMoodColor = (moodValue) => {
     const roundedMood = Math.round(moodValue);
-    return moodIcons.find((mood) => mood.id === roundedMood + 1).color;
+    // Check if rounded mood is valid (0-4) and provide fallback if not found
+    if (roundedMood < 0 || roundedMood > 4) {
+      return colors.text.secondary; // Default fallback color
+    }
+
+    const moodIcon = moodIcons.find((mood) => mood.id === roundedMood + 1);
+    return moodIcon ? moodIcon.color : colors.text.secondary;
   };
 
   // Get mood label from value
   const getMoodLabel = (moodValue) => {
     const labels = ["Awful", "Bad", "Neutral", "Good", "Radiant"];
-    return labels[Math.round(moodValue)];
+    const roundedMood = Math.round(moodValue);
+
+    // Check if mood index is valid
+    if (roundedMood < 0 || roundedMood >= labels.length) {
+      return "Neutral"; // Default fallback label
+    }
+
+    return labels[roundedMood];
   };
 
   // Create line path for the trend

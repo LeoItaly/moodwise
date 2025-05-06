@@ -45,6 +45,53 @@ export const activities = [
 // Sample data
 export const sampleData = [
   {
+    date: "2025-05-06",
+    moods: [4, 5],
+    activities: ["Running", "Yoga"],
+    weather: "Sunny",
+    notes:
+      "Perfect day! Morning run and evening yoga session really boosted my spirits.",
+  },
+  {
+    date: "2025-05-05",
+    moods: [3, 4],
+    activities: ["Cycling", "Swimming"],
+    weather: "Cloudy",
+    notes:
+      "Started neutral but the swim in the afternoon really improved my mood.",
+  },
+  {
+    date: "2025-05-04",
+    moods: [2, 3],
+    activities: ["Walking", "Tennis"],
+    weather: "Windy",
+    notes:
+      "Challenging walk due to the wind, but tennis indoors helped my mood improve.",
+  },
+  {
+    date: "2025-05-03",
+    moods: [4, 3],
+    activities: ["Football", "Badminton"],
+    weather: "Sunny",
+    notes: "Great football match in the morning but got tired by evening.",
+  },
+  {
+    date: "2025-05-02",
+    moods: [3, 4],
+    activities: ["Gym", "Handball"],
+    weather: "Rainy",
+    notes:
+      "Productive workout and fun handball session despite the rainy weather.",
+  },
+  {
+    date: "2025-05-01",
+    moods: [5, 4],
+    activities: ["Gymnastics", "Walking"],
+    weather: "Sunny",
+    notes:
+      "May Day celebration with morning gymnastics and a lovely evening walk.",
+  },
+  {
     date: "2025-04-30",
     moods: [3, 4], // morning and evening moods
     activities: ["Walking", "Gym"],
@@ -55,16 +102,18 @@ export const sampleData = [
   {
     date: "2025-04-29",
     moods: [2, 3],
-    activities: ["Swimming"],
+    activities: ["Swimming", "Yoga"],
     weather: "Cloudy",
-    notes: "Woke up feeling a bit tired, but swimming helped improve my mood.",
+    notes:
+      "Woke up feeling a bit tired, but swimming and yoga helped improve my mood.",
   },
   {
     date: "2025-04-28",
     moods: [1, 2],
-    activities: ["Running"],
+    activities: ["Running", "Badminton"],
     weather: "Rainy",
-    notes: "Difficult day overall. The rain made my run challenging.",
+    notes:
+      "Difficult day overall. The rain made my run challenging, but badminton indoors was fun.",
   },
   {
     date: "2025-04-27",
@@ -77,24 +126,26 @@ export const sampleData = [
   {
     date: "2025-04-26",
     moods: [4, 4],
-    activities: ["Football", "Gym"],
+    activities: ["Football", "Handball"],
     weather: "Sunny",
-    notes: "Perfect day! Football match was great and had an amazing workout.",
+    notes:
+      "Perfect day! Football match was great and tried handball for the first time.",
   },
   {
     date: "2025-04-25",
     moods: [3, 3],
-    activities: ["Walking", "Tennis"],
+    activities: ["Tennis", "Cycling"],
     weather: "Cloudy",
-    notes: "Consistent good mood throughout the day. Tennis was fun!",
+    notes:
+      "Consistent good mood throughout the day. Tennis and cycling were fun!",
   },
   {
     date: "2025-04-24",
     moods: [2, 2],
-    activities: ["Swimming"],
+    activities: ["Swimming", "Gymnastics"],
     weather: "Rainy",
     notes:
-      "Feeling neutral. Swimming indoors was a good choice on a rainy day.",
+      "Feeling neutral. Swimming indoors was a good choice on a rainy day. Tried gymnastics too.",
   },
   {
     date: "2025-04-23",
@@ -108,8 +159,9 @@ export const sampleData = [
     date: "2025-04-22",
     moods: [3, 3],
     activities: ["Gym", "Yoga"],
-    weather: "Sunny",
-    notes: "Productive workout followed by relaxing yoga session.",
+    weather: "Snowy",
+    notes:
+      "Productive workout followed by relaxing yoga session. Snowy day outside.",
   },
   {
     date: "2025-04-21",
@@ -121,14 +173,15 @@ export const sampleData = [
   {
     date: "2025-04-20",
     moods: [2, 3],
-    activities: ["Walking"],
+    activities: ["Walking", "Badminton"],
     weather: "Cloudy",
-    notes: "Started with an average mood but the walk helped me feel better.",
+    notes:
+      "Started with an average mood but the walk and badminton helped me feel better.",
   },
   {
     date: "2025-04-19",
     moods: [3, 4],
-    activities: ["Running", "Gym"],
+    activities: ["Running", "Tennis"],
     weather: "Sunny",
     notes: "Spring weather and exercise boosted my mood.",
   },
@@ -136,128 +189,134 @@ export const sampleData = [
     date: "2025-04-18",
     moods: [4, 4],
     activities: ["Swimming", "Yoga"],
-    weather: "Sunny",
-    notes: "Perfect Sunday - swimming and yoga are my favorite combination.",
+    weather: "Windy",
+    notes:
+      "Perfect Sunday - swimming and yoga are my favorite combination despite the wind.",
   },
   {
     date: "2025-04-17",
     moods: [2, 2],
     activities: ["Rest"],
-    weather: "Rainy",
-    notes: "Weekend but rainy, so I decided to stay home and rest.",
+    weather: "Snowy",
+    notes: "Weekend but snowy, so I decided to stay home and rest.",
   },
   {
     date: "2025-04-16",
     moods: [3, 4],
-    activities: ["Walking", "Tennis"],
-    weather: "Cloudy",
-    notes: "Had a nice walk and played tennis with friends.",
+    activities: ["Walking", "Handball"],
+    weather: "Windy",
+    notes: "Had a nice walk and played handball with friends.",
   },
   {
     date: "2025-04-15",
     moods: [2, 3],
-    activities: ["Cycling"],
+    activities: ["Cycling", "Gymnastics"],
     weather: "Cloudy",
-    notes: "Bike ride after work improved my mood significantly.",
+    notes:
+      "Bike ride after work improved my mood significantly. Tried gymnastics class.",
   },
   {
     date: "2025-04-14",
     moods: [1, 2],
-    activities: ["Gym"],
+    activities: ["Gym", "Football"],
     weather: "Rainy",
-    notes: "Feeling a bit down today, but the gym helped a little.",
+    notes:
+      "Feeling a bit down today, but the gym and football helped a little.",
   },
   {
     date: "2025-04-13",
     moods: [3, 3],
-    activities: ["Running", "Yoga"],
+    activities: ["Running", "Badminton"],
     weather: "Sunny",
-    notes: "Great day! Had a nice run and yoga session.",
+    notes: "Great day! Had a nice run and badminton session.",
   },
   {
     date: "2025-04-12",
     moods: [2, 1],
-    activities: [],
-    weather: "Windy",
-    notes: "Monday blues hit hard. Windy day made it worse.",
+    activities: ["Swimming"],
+    weather: "Snowy",
+    notes:
+      "Monday blues hit hard. Snowy day made it worse but swimming helped a bit.",
   },
   {
     date: "2025-04-11",
     moods: [4, 3],
-    activities: ["Swimming", "Walking"],
+    activities: ["Tennis", "Walking"],
     weather: "Sunny",
     notes:
-      "Great Sunday! Started with a morning swim and ended with a sunset walk.",
+      "Great Sunday! Started with a tennis match and ended with a sunset walk.",
   },
   {
     date: "2025-04-10",
     moods: [3, 4],
-    activities: ["Football", "Gym"],
-    weather: "Sunny",
-    notes: "Played a great football match and had an energizing gym session.",
+    activities: ["Football", "Handball"],
+    weather: "Cloudy",
+    notes: "Played a great football match and tried handball with friends.",
   },
   {
     date: "2025-04-09",
     moods: [2, 3],
-    activities: ["Walking"],
-    weather: "Cloudy",
-    notes: "Average day, but the walk helped clear my mind.",
+    activities: ["Walking", "Yoga"],
+    weather: "Windy",
+    notes:
+      "Average day, but the walk and yoga helped clear my mind despite the wind.",
   },
   {
     date: "2025-04-08",
     moods: [1, 2],
-    activities: ["Gym"],
+    activities: ["Gym", "Badminton"],
     weather: "Rainy",
     notes:
-      "The rain and workload affected my mood, but the gym session helped a bit.",
+      "The rain and workload affected my mood, but the gym and badminton sessions helped a bit.",
   },
   {
     date: "2025-04-07",
     moods: [3, 4],
-    activities: ["Yoga", "Swimming"],
-    weather: "Sunny",
-    notes: "Great day of self-care activities.",
+    activities: ["Yoga", "Gymnastics"],
+    weather: "Snowy",
+    notes: "Great day of indoor activities on a snowy day.",
   },
   {
     date: "2025-04-06",
     moods: [2, 2],
-    activities: ["Running"],
+    activities: ["Running", "Tennis"],
     weather: "Windy",
-    notes: "Neutral day. The run was challenging due to the wind.",
+    notes:
+      "Neutral day. The run was challenging due to the wind, but tennis was fun.",
   },
   {
     date: "2025-04-05",
     moods: [0, 1],
-    activities: [],
+    activities: ["Rest"],
     weather: "Rainy",
     notes: "Very difficult day. The rain made it worse.",
   },
   {
     date: "2025-04-04",
     moods: [4, 3],
-    activities: ["Cycling", "Yoga"],
+    activities: ["Cycling", "Handball"],
     weather: "Sunny",
-    notes: "Wonderful Sunday with outdoor cycling and relaxing yoga.",
+    notes: "Wonderful Sunday with outdoor cycling and handball.",
   },
   {
     date: "2025-04-03",
     moods: [3, 4],
-    activities: ["Tennis", "Swimming"],
-    weather: "Sunny",
+    activities: ["Tennis", "Football"],
+    weather: "Cloudy",
     notes: "Great Saturday with outdoor activities and sports.",
   },
   {
     date: "2025-04-02",
     moods: [2, 3],
-    activities: ["Gym"],
-    weather: "Cloudy",
-    notes: "Average mood improved after a good workout.",
+    activities: ["Swimming", "Cycling"],
+    weather: "Windy",
+    notes: "Started the day feeling low, but exercise helped improve my mood.",
   },
   {
     date: "2025-04-01",
-    moods: [3, 2],
-    activities: ["Walking"],
-    weather: "Windy",
-    notes: "Started well but the windy afternoon brought my mood down.",
+    moods: [4, 4],
+    activities: ["Yoga", "Walking"],
+    weather: "Sunny",
+    notes: "Perfect day of balance - calming yoga and refreshing walk.",
   },
 ];

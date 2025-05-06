@@ -13,6 +13,7 @@ import {
 } from "../constants";
 import { useFocusEffect } from "@react-navigation/native";
 import { loadMoodData } from "../utils/storage";
+import MoodSummaryModal from "../components/MoodSummaryModal";
 
 // Custom wrapper for MoodSummaryModal that only shows a Back button
 const ReadOnlyMoodModal = ({ visible, onClose, selectedDay }) => {
@@ -28,6 +29,29 @@ const ReadOnlyMoodModal = ({ visible, onClose, selectedDay }) => {
       day: "numeric",
     };
     return date.toLocaleDateString(undefined, options);
+  };
+
+  // Helper functions
+  const getMoodLabel = (moodIndex) => {
+    if (moodIndex === null || moodIndex === undefined) return "Not specified";
+    const mood = moodIcons[moodIndex];
+    return mood ? `${mood.emoji} ${mood.label}` : "Not specified";
+  };
+
+  const getWeatherIcon = (weatherName) => {
+    if (!weatherName) return null;
+    const weatherOption = weather.find((w) => w.label === weatherName);
+    return weatherOption ? weatherOption.icon : null;
+  };
+
+  const getActivityIcon = (activityName) => {
+    const activity = activities.find((a) => a.label === activityName);
+    return activity ? activity.icon : null;
+  };
+
+  const getActivityDisplayName = (activityName) => {
+    const activity = activities.find((a) => a.label === activityName);
+    return activity ? activity.label : activityName;
   };
 
   return (
@@ -111,29 +135,6 @@ const ReadOnlyMoodModal = ({ visible, onClose, selectedDay }) => {
       </View>
     </Modal>
   );
-
-  // Helper functions
-  function getMoodLabel(moodIndex) {
-    if (moodIndex === null || moodIndex === undefined) return "Not specified";
-    const mood = moodIcons[moodIndex];
-    return mood ? `${mood.emoji} ${mood.label}` : "Not specified";
-  }
-
-  function getWeatherIcon(weatherName) {
-    if (!weatherName) return null;
-    const weatherOption = weather.find((w) => w.label === weatherName);
-    return weatherOption ? weatherOption.icon : null;
-  }
-
-  function getActivityIcon(activityName) {
-    const activity = activities.find((a) => a.label === activityName);
-    return activity ? activity.icon : null;
-  }
-
-  function getActivityDisplayName(activityName) {
-    const activity = activities.find((a) => a.label === activityName);
-    return activity ? activity.label : activityName;
-  }
 };
 
 export default function CalendarScreen({ route }) {
@@ -312,6 +313,18 @@ export default function CalendarScreen({ route }) {
     return colors.mood.great;
   }
 
+  // Format date for display in modal
+  const formatDateForDisplay = (dateString) => {
+    const date = new Date(dateString);
+    const options = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    return date.toLocaleDateString(undefined, options);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.calendarContainer}>
@@ -394,12 +407,19 @@ export default function CalendarScreen({ route }) {
         </View>
       </View>
 
-      {/* Day Details Modal - Read-only version */}
+      {/* Day Details Modal - using MoodSummaryModal instead of custom modal */}
       {selectedDay && (
-        <ReadOnlyMoodModal
+        <MoodSummaryModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          selectedDay={selectedDay}
+          dateString={formatDateForDisplay(selectedDay.date)}
+          morningMood={selectedDay.moods[0]}
+          eveningMood={selectedDay.moods[1]}
+          selectedActivities={selectedDay.activities || []}
+          selectedWeather={selectedDay.weather}
+          notes={selectedDay.notes || ""}
+          isTodaysMood={selectedDay.date === formatDateISO(new Date())}
+          isReadOnly={true}
         />
       )}
     </View>

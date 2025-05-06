@@ -1,4 +1,6 @@
 // In-memory storage (for demo purposes)
+import { sampleData } from "../data/appData";
+
 let inMemoryStorage = {
   moodData: [],
   customActivities: [],
@@ -9,36 +11,21 @@ let inMemoryStorage = {
 const generateConsecutiveDaysData = () => {
   // Only generate if storage is empty
   if (inMemoryStorage.moodData.length === 0) {
+    // Instead of generating random data, use the predefined sample data with varied activities and weather
+    inMemoryStorage.moodData = [...sampleData];
+
+    // Match the dates to current relative dates if needed
     const today = new Date();
-    const mockData = [];
 
-    // Generate data for the last 31 days (including today)
-    for (let i = 0; i < 31; i++) {
+    // Update dates to be relative to today
+    inMemoryStorage.moodData = inMemoryStorage.moodData.map((entry, index) => {
       const date = new Date();
-      date.setDate(today.getDate() - i);
-
-      // Format date as YYYY-MM-DD
-      const formattedDate = formatDateISO(date);
-
-      // Create random mood data for this day
-      mockData.push({
-        date: formattedDate,
-        moods: [
-          Math.floor(Math.random() * 5), // Random morning mood 0-4
-          Math.floor(Math.random() * 5), // Random evening mood 0-4
-        ],
-        activities: ["Walking"], // Simple activity for demo
-        weather: "Sunny",
-        notes: `Day ${i + 1} of my mood tracking journey.`,
-        customActivities: [],
-      });
-    }
-
-    // Sort data with newest first
-    mockData.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // Save the mock data
-    inMemoryStorage.moodData = mockData;
+      date.setDate(today.getDate() - index);
+      return {
+        ...entry,
+        date: formatDateISO(date),
+      };
+    });
   }
 };
 

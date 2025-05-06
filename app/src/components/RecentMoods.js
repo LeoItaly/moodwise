@@ -127,8 +127,8 @@ const RecentMoods = ({ onCalendarPress, onDayPress, allMoodData = [] }) => {
               <Text
                 style={[
                   styles.dayText,
-                  // Use dark text for empty/light colored bubbles
-                  !avgMood || avgMood >= 2 ? styles.darkText : styles.lightText,
+                  // Always use dark text (colors.text.primary) for all days
+                  styles.darkText,
                   item.isToday && styles.todayText,
                 ]}
               >

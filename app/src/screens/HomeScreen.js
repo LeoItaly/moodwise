@@ -543,7 +543,7 @@ export default function HomeScreen() {
               <Text style={styles.ctaButtonText}>
                 {hasSavedTodaysMood
                   ? "Change Your Today's Mood"
-                  : "Log Your Today's Mood"}
+                  : "Log Today's Mood"}
               </Text>
             </TouchableOpacity>
           </Animated.View>
